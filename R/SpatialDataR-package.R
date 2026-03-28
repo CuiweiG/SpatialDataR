@@ -1,0 +1,54 @@
+#' SpatialDataR: Native R Interface to the SpatialData Zarr Format
+#'
+#' Provides native R access to SpatialData Zarr stores without
+#' Python dependencies. Reads images, labels, points, shapes,
+#' and annotation tables into Bioconductor-native objects.
+#'
+#' @section Why SpatialDataR:
+#' The Python \code{spatialdata} library (Marconato et al. 2024)
+#' established a universal data framework for spatial omics. However,
+#' R/Bioconductor users currently need Python bridges (reticulate)
+#' to access SpatialData stores. This package provides direct Zarr
+#' reading, eliminating the Python dependency and enabling native
+#' integration with \code{SpatialExperiment}, \code{DelayedArray},
+#' and the Bioconductor ecosystem.
+#'
+#' @section Key functions:
+#' \describe{
+#'   \item{Reading}{\code{\link{readSpatialData}},
+#'     \code{\link{readZarrArray}},
+#'     \code{\link{readParquetPoints}},
+#'     \code{\link{readSpatialTable}}}
+#'   \item{Accessors}{\code{\link{images}},
+#'     \code{\link{labels}},
+#'     \code{\link{spatialPoints}},
+#'     \code{\link{shapes}},
+#'     \code{\link{tables}},
+#'     \code{\link{coordinateSystems}}}
+#'   \item{Transforms}{\code{\link{CoordinateTransform}},
+#'     \code{\link{transformCoords}}}
+#' }
+#'
+#' @references
+#' Marconato L et al. (2024). SpatialData: an open and universal
+#' data framework for spatial omics. \emph{Nat Methods} 21:2196-2209.
+#' \doi{10.1038/s41592-024-02212-x}
+#'
+#' @examples
+#' # Create mock SpatialData store
+#' tmp <- tempfile()
+#' dir.create(file.path(tmp, "images", "he_image"), recursive = TRUE)
+#' dir.create(file.path(tmp, "points", "transcripts"), recursive = TRUE)
+#' writeLines('{"spatialdata_attrs": {"version": "0.1"}}',
+#'     file.path(tmp, ".zattrs"))
+#' writeLines('{}', file.path(tmp, "images", "he_image", ".zattrs"))
+#' writeLines('{}', file.path(tmp, "points", "transcripts", ".zattrs"))
+#' sd <- readSpatialData(tmp)
+#' sd
+#' unlink(tmp, recursive = TRUE)
+#'
+#' @docType package
+#' @name SpatialDataR-package
+#' @aliases SpatialDataR-package
+#' @keywords package
+"_PACKAGE"

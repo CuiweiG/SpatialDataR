@@ -1,0 +1,56 @@
+Package: SpatialDataR
+Title: Native R Interface to the SpatialData Zarr Format for Spatial
+    Omics
+Version: 0.99.0
+Authors@R:
+    person("CuiweiG", email = "48gaocuiwei@gmail.com",
+    role = c("aut", "cre"))
+Description: Provides native R access to SpatialData Zarr stores
+    without Python dependencies. Reads images, labels, points, shapes,
+    and annotation tables from SpatialData-formatted Zarr archives
+    into Bioconductor-native objects (SpatialExperiment, SpatRaster,
+    DelayedArray). Supports lazy out-of-memory access for
+    large-scale spatial omics datasets (10x Xenium, Visium,
+    MERFISH) and coordinate system transformations. Designed as
+    infrastructure that bridges the Python SpatialData ecosystem
+    with the R/Bioconductor spatial analysis stack.
+License: Artistic-2.0
+Depends: R (>= 4.4.0)
+Imports:
+    methods,
+    S4Vectors (>= 0.32.0),
+    jsonlite,
+    utils
+Suggests:
+    BiocGenerics,
+    SummarizedExperiment,
+    SpatialExperiment,
+    SingleCellExperiment,
+    DelayedArray,
+    pizzarr,
+    Rarr,
+    arrow,
+    terra,
+    ggplot2,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    BiocStyle,
+    BiocCheck
+biocViews: Spatial, SingleCell, DataImport, Infrastructure,
+    DataRepresentation
+URL: https://github.com/CuiweiG/SpatialDataR
+BugReports: https://github.com/CuiweiG/SpatialDataR/issues
+Encoding: UTF-8
+LazyData: false
+RoxygenNote: 7.3.3
+VignetteBuilder: knitr
+Collate:
+    'AllClasses.R'
+    'AllGenerics.R'
+    'SpatialDataR-package.R'
+    'methods.R'
+    'read-elements.R'
+    'read-zarr.R'
+    'transforms.R'
+    'zzz.R'

@@ -1,0 +1,6 @@
+^\.gitignore$
+^\.github$
+^README\.Rmd$
+^doc$
+^Meta$
+^\.DS_Store$
