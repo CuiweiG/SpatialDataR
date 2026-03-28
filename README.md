@@ -15,10 +15,10 @@
 ## The problem
 
 [SpatialData](https://spatialdata.scverse.org/) (Marconato et al.
-2024 *Nat Methods*) is the emerging universal format for spatial
-omics. But it requires Python — R/Bioconductor users must use
-`reticulate` bridges, losing native lazy loading, type safety,
-and integration with `SpatialExperiment`.
+2024 *Nat Methods*) is the universal format for spatial omics. But
+it requires Python. R/Bioconductor users must use `reticulate`
+bridges, losing native lazy loading, type safety, and integration
+with `SpatialExperiment`.
 
 ## The solution
 
@@ -27,28 +27,33 @@ with zero Python dependencies:
 
 ```r
 library(SpatialDataR)
-
-# Read a Xenium dataset
 sd <- readSpatialData("xenium_breast.zarr")
 sd
 #> SpatialData object
-#>   images(2): morphology, he_image
+#>   images(1): morphology
 #>   labels(1): cell_labels
 #>   points(1): transcripts
 #>   tables(1): table
-
-# Access elements as Bioconductor objects
-spe <- tables(sd)[["table"]]       # SpatialExperiment
-img <- readZarrArray("xenium_breast.zarr/images/morphology/scale0")
-pts <- readParquetPoints("xenium_breast.zarr/points/transcripts")
-
-# Coordinate transformation
-ct <- CoordinateTransform("affine",
-    affine = matrix(c(0.5, 0, 10, 0, 0.5, 20, 0, 0, 1),
-                    nrow = 3, byrow = TRUE),
-    input_cs = "pixels", output_cs = "microns")
-pts_um <- transformCoords(pts, ct)
+#>   coordinate_systems: global, pixels
 ```
+
+---
+
+<div align="center">
+<img src="man/figures/fig1_spatial_overview.png" width="700" alt="Spatial overview"/>
+</div>
+
+> **Figure 1 | Multi-modal spatial data accessed natively in R.**
+> Xenium-format breast tissue data read from a SpatialData Zarr
+> store without Python. (**a**) Transcript spatial map (500
+> transcripts, 10 marker genes). (**b**) Cell type composition
+> (50 cells: epithelial, stromal, immune, endothelial).
+> (**c**) Cell boundaries colored by cell type with size
+> proportional to cell radius. All data read via
+> `readSpatialData()` + accessors. Colour palette: Wong (2011)
+> *Nat Methods* 8:441.
+
+---
 
 ## Architecture
 
@@ -66,20 +71,16 @@ tables/   (AnnData/Zarr)   --->   SpatialExperiment
 ## Installation
 
 ```r
-# Development version:
 BiocManager::install("CuiweiG/SpatialDataR")
 ```
 
 ## Key design principles
 
 1. **Zero Python.** Direct Zarr/Parquet reading via `Rarr` and
-   `arrow` — no `reticulate`, no conda environments.
-2. **Lazy by default.** Images stay on disk as `DelayedArray`
-   until computation requires them.
-3. **Bioconductor-native.** Tables become `SpatialExperiment`,
-   not ad hoc data frames.
-4. **Spec-compliant.** Follows the SpatialData Zarr spec
-   including coordinate transformations.
+   `arrow`.
+2. **Lazy by default.** Images stay on disk as `DelayedArray`.
+3. **Bioconductor-native.** Tables become `SpatialExperiment`.
+4. **Spec-compliant.** Follows the SpatialData Zarr spec.
 
 ## References
 
