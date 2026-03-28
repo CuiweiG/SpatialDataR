@@ -2,7 +2,7 @@
 
 # SpatialDataR
 
-*Native R Interface to the SpatialData Zarr Format for Spatial Omics*
+*Native R Infrastructure for Reading SpatialData Zarr Stores*
 
 [![R-CMD-check](https://github.com/CuiweiG/SpatialDataR/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/CuiweiG/SpatialDataR/actions/workflows/R-CMD-check.yml)
 [![License: Artistic-2.0](https://img.shields.io/badge/License-Artistic--2.0-blue.svg)](https://opensource.org/licenses/Artistic-2.0)
@@ -15,15 +15,23 @@
 ## The problem
 
 [SpatialData](https://spatialdata.scverse.org/) (Marconato et al.
-2024 *Nat Methods*) is the universal format for spatial omics. But
-it requires Python. R/Bioconductor users must use `reticulate`
-bridges, losing native lazy loading, type safety, and integration
-with `SpatialExperiment`.
+2024 *Nat Methods*) defines a universal Zarr-based format for
+spatial omics. R-side support has remained limited, with no mature
+native Bioconductor-oriented reader providing direct, zero-Python
+access to SpatialData stores.
 
-## The solution
+## What SpatialDataR provides
 
-`SpatialDataR` reads SpatialData `.zarr` stores **directly in R**
-with zero Python dependencies:
+`SpatialDataR` reads SpatialData `.zarr` stores directly in R:
+
+- **Store discovery**: `readSpatialData()` parses `.zattrs`
+  metadata and discovers images, labels, points, shapes, tables
+- **Element readers**: `readZarrArray()` (via Rarr/pizzarr),
+  `readParquetPoints()` (via arrow), `readSpatialTable()`
+- **Coordinate transforms**: `CoordinateTransform` class with
+  affine transformation support
+- **Lazy references**: elements are discovered but not loaded
+  into memory until explicitly accessed
 
 ```r
 library(SpatialDataR)
@@ -31,7 +39,7 @@ sd <- readSpatialData("xenium_breast.zarr")
 sd
 #> SpatialData object
 #>   images(1): morphology
-#>   labels(1): cell_labels
+#>   spatialLabels(1): cell_labels
 #>   points(1): transcripts
 #>   tables(1): table
 #>   coordinate_systems: global, pixels
@@ -43,44 +51,22 @@ sd
 <img src="man/figures/fig1_spatial_overview.png" width="700" alt="Spatial overview"/>
 </div>
 
-> **Figure 1 | Multi-modal spatial data accessed natively in R.**
-> Xenium-format breast tissue data read from a SpatialData Zarr
-> store without Python. (**a**) Transcript spatial map (500
-> transcripts, 10 marker genes). (**b**) Cell type composition
-> (50 cells: epithelial, stromal, immune, endothelial).
-> (**c**) Cell boundaries colored by cell type with size
-> proportional to cell radius. All data read via
-> `readSpatialData()` + accessors. Colour palette: Wong (2011)
-> *Nat Methods* 8:441.
+> **Figure 1 | Multi-modal spatial data read from a
+> SpatialData-spec Zarr store.** Demo data distributed with
+> the package (50 cells, 10 genes, 500 transcripts).
+> (**a**) Transcript spatial map. (**b**) Cell type
+> composition. (**c**) Cell boundaries colored by type.
 
 ---
-
-## Architecture
-
-```
-SpatialData .zarr store          SpatialDataR objects
-========================         ========================
-images/   (Zarr arrays)   --->   DelayedArray (lazy)
-labels/   (Zarr arrays)   --->   DelayedArray (lazy)
-points/   (Parquet)        --->   DataFrame
-shapes/   (GeoParquet)     --->   DataFrame
-tables/   (AnnData/Zarr)   --->   SpatialExperiment
-.zattrs   (coord systems)  --->   CoordinateTransform
-```
 
 ## Installation
 
 ```r
-BiocManager::install("CuiweiG/SpatialDataR")
+# Development version:
+if (!requireNamespace("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_github("CuiweiG/SpatialDataR")
 ```
-
-## Key design principles
-
-1. **Zero Python.** Direct Zarr/Parquet reading via `Rarr` and
-   `arrow`.
-2. **Lazy by default.** Images stay on disk as `DelayedArray`.
-3. **Bioconductor-native.** Tables become `SpatialExperiment`.
-4. **Spec-compliant.** Follows the SpatialData Zarr spec.
 
 ## References
 

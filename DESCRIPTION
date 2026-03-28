@@ -5,15 +5,14 @@ Version: 0.99.0
 Authors@R:
     person("CuiweiG", email = "48gaocuiwei@gmail.com",
     role = c("aut", "cre"))
-Description: Provides native R access to SpatialData Zarr stores
-    without Python dependencies. Reads images, labels, points, shapes,
-    and annotation tables from SpatialData-formatted Zarr archives
-    into Bioconductor-native objects (SpatialExperiment, SpatRaster,
-    DelayedArray). Supports lazy out-of-memory access for
-    large-scale spatial omics datasets (10x Xenium, Visium,
-    MERFISH) and coordinate system transformations. Designed as
-    infrastructure that bridges the Python SpatialData ecosystem
-    with the R/Bioconductor spatial analysis stack.
+Description: Provides native R infrastructure for inspecting and
+    reading SpatialData-formatted Zarr stores without Python
+    dependencies. Discovers and lazily references images, labels,
+    points, shapes, and annotation tables. Includes element-level
+    readers for Zarr arrays (via Rarr/pizzarr), Parquet point
+    tables (via arrow), and coordinate system transformations.
+    Designed as a lightweight bridge between the Python SpatialData
+    ecosystem and R/Bioconductor spatial analysis workflows.
 License: Artistic-2.0
 Depends: R (>= 4.4.0)
 Imports:

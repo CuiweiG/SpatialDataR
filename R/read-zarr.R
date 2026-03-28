@@ -142,5 +142,8 @@ readSpatialData <- function(path, elements = NULL, ...) {
     cs <- sd_attrs[["coordinate_systems"]]
     if (is.null(cs)) return(list())
 
+    ## Return as-is (named list of coordinate system definitions)
+    ## Users can construct CoordinateTransform objects manually
+    ## or use .parseTransform() on element-level metadata
     cs
 }

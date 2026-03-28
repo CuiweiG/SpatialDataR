@@ -16,137 +16,91 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
+# Installation
+
+```{r eval=FALSE}
+if (!requireNamespace("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_github("CuiweiG/SpatialDataR")
+```
+
 # Introduction
 
-`SpatialDataR` provides native R access to SpatialData Zarr stores
-without Python dependencies. The Python `spatialdata` library
-(Marconato et al. 2024 *Nature Methods*) defined a universal format
-for spatial omics — but R users had no way to read it without
-`reticulate`. This package fills that gap.
+`SpatialDataR` provides native R infrastructure for reading
+SpatialData-formatted Zarr stores without Python dependencies.
+The Python `spatialdata` library (Marconato et al. 2024 *Nature
+Methods*) defined a universal format for spatial omics.
+R-side support has remained limited; this package provides a
+lightweight bridge to the Bioconductor ecosystem.
 
-## Why not reticulate?
+## Positioning
 
-Using Python bridges introduces:
+`SpatialDataR` complements existing tools:
 
-- Conda/virtualenv dependency management
-- Type conversion overhead
-- Loss of lazy loading (DelayedArray)
-- No native SpatialExperiment integration
+- **vs reticulate**: zero Python dependency, native R objects
+- **vs Rarr/pizzarr**: SpatialData-aware metadata parsing,
+  not just raw Zarr array reading
+- **vs SpatialExperiment**: reads SpatialData *stores*, not
+  individual matrices
 
-`SpatialDataR` reads Zarr directly using `Rarr`/`pizzarr` and
-returns Bioconductor-native objects.
+# Reading a SpatialData store
 
-# Quick start
+The package ships a minimal Zarr store (`xenium_mini.zarr`)
+following the SpatialData specification.
 
-## Reading a SpatialData store
-
-```{r mock-store}
+```{r read-store}
 library(SpatialDataR)
 
-# Create a mock SpatialData Zarr store for demonstration
-tmp <- tempfile()
-dir.create(file.path(tmp, "images", "morphology"), recursive = TRUE)
-dir.create(file.path(tmp, "points", "transcripts"), recursive = TRUE)
-dir.create(file.path(tmp, "tables", "adata"), recursive = TRUE)
-dir.create(file.path(tmp, "labels", "cells"), recursive = TRUE)
-
-# Write metadata (SpatialData spec)
-writeLines('{"spatialdata_attrs": {"version": "0.1"}}',
-    file.path(tmp, ".zattrs"))
-writeLines('{}', file.path(tmp, "images", "morphology", ".zattrs"))
-writeLines('{}', file.path(tmp, "points", "transcripts", ".zattrs"))
-writeLines('{}', file.path(tmp, "tables", "adata", ".zattrs"))
-writeLines('{}', file.path(tmp, "labels", "cells", ".zattrs"))
-
-# Read the store
-sd <- readSpatialData(tmp)
+store_path <- system.file("extdata", "xenium_mini.zarr",
+    package = "SpatialDataR")
+sd <- readSpatialData(store_path)
 sd
 ```
 
-## Accessing elements
+## Accessors
 
 ```{r accessors}
-# Each element type has an accessor
 images(sd)
 spatialLabels(sd)
 spatialPoints(sd)
 shapes(sd)
 tables(sd)
+```
+
+## Coordinate systems
+
+```{r coord-sys}
 coordinateSystems(sd)
 ```
 
 ## Selective reading
 
 ```{r selective}
-# Read only specific element types
-sd_img <- readSpatialData(tmp, elements = c("images", "labels"))
+sd_img <- readSpatialData(store_path,
+    elements = c("images", "labels"))
 sd_img
-```
-
-```{r cleanup-store, include=FALSE}
-unlink(tmp, recursive = TRUE)
 ```
 
 # Coordinate transformations
 
-SpatialData stores include coordinate system definitions for
-aligning multi-modal data. `SpatialDataR` supports affine
-transformations natively.
+SpatialData stores define coordinate systems for aligning
+multi-modal data. `SpatialDataR` supports affine transforms.
 
 ```{r transforms}
 library(S4Vectors)
 
-# Create point coordinates (in pixel space)
-pts <- DataFrame(x = c(100, 200, 300, 400),
-                 y = c(50, 150, 250, 350))
+pts <- DataFrame(x = c(100, 200, 300), y = c(50, 150, 250))
 
-# Define pixel-to-micron transformation (0.5 um/pixel + offset)
-pixel_to_um <- CoordinateTransform("affine",
-    affine = matrix(c(0.2125, 0, 10,
-                      0, 0.2125, 20,
+# Pixel-to-micron transformation (0.2125 um/pixel)
+ct <- CoordinateTransform("affine",
+    affine = matrix(c(0.2125, 0, 0,
+                      0, 0.2125, 0,
                       0, 0, 1), nrow = 3, byrow = TRUE),
-    input_cs = "pixels",
-    output_cs = "microns")
-pixel_to_um
+    input_cs = "pixels", output_cs = "microns")
+ct
 
-# Apply transformation
-pts_um <- transformCoords(pts, pixel_to_um)
-pts_um
-```
-
-# Architecture
-
-SpatialDataR maps SpatialData elements to Bioconductor objects:
-
-| SpatialData element | Zarr format | R representation |
-|---------------------|-------------|------------------|
-| images | Zarr arrays | DelayedArray (lazy) |
-| labels | Zarr arrays | DelayedArray (lazy) |
-| points | Parquet | DataFrame |
-| shapes | GeoParquet | DataFrame |
-| tables | AnnData/Zarr | SpatialExperiment |
-
-All reading is lazy by default — data stays on disk until
-explicitly accessed.
-
-# Working with real data
-
-To analyze a real Xenium or Visium dataset stored in SpatialData
-format:
-
-```r
-# Read a 10x Xenium dataset
-sd <- readSpatialData("xenium_breast_cancer.zarr")
-
-# Get the expression table as SpatialExperiment
-spe <- readSpatialTable("xenium_breast_cancer.zarr/tables/table")
-
-# Read transcript coordinates
-pts <- readParquetPoints("xenium_breast_cancer.zarr/points/transcripts")
-
-# Transform to physical coordinates
-ct <- coordinateSystems(sd)[["global"]]
 pts_um <- transformCoords(pts, ct)
+pts_um
 ```
 
 # Session info

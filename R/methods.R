@@ -41,7 +41,7 @@ setMethod("show", "SpatialData", function(object) {
     cat("  path:", slot(object, "path"), "\n")
     cat("  images(", length(images(object)), "): ",
         paste(names(images(object)), collapse = ", "), "\n", sep = "")
-    cat("  labels(", length(spatialLabels(object)), "): ",
+    cat("  spatialLabels(", length(spatialLabels(object)), "): ",
         paste(names(labels(object)), collapse = ", "), "\n", sep = "")
     cat("  points(", length(spatialPoints(object)), "): ",
         paste(names(spatialPoints(object)), collapse = ", "),
