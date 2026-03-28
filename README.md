@@ -59,6 +59,37 @@ sd
 
 ---
 
+## Functions
+
+### Store-level
+
+| Function | Description |
+|----------|-------------|
+| `readSpatialData()` | Discover and lazily reference all elements in a .zarr store |
+| `images()` | Access image element references |
+| `spatialLabels()` | Access segmentation label references |
+| `spatialPoints()` | Access point coordinate references |
+| `shapes()` | Access shape geometry references |
+| `tables()` | Access annotation table references |
+| `coordinateSystems()` | Access coordinate system metadata |
+
+### Element-level readers
+
+| Function | Description |
+|----------|-------------|
+| `readZarrArray()` | Read a Zarr array via Rarr/pizzarr backend |
+| `readParquetPoints()` | Read Parquet-backed transcript coordinates |
+| `readSpatialTable()` | Convert AnnData Zarr table to SpatialExperiment |
+
+### Coordinate transforms
+
+| Function | Description |
+|----------|-------------|
+| `CoordinateTransform()` | Construct affine/identity transformation |
+| `transformCoords()` | Apply transformation to point coordinates |
+
+---
+
 ## Installation
 
 ```r
