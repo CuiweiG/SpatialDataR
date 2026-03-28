@@ -1,0 +1,156 @@
+---
+title: "Introduction to SpatialDataR"
+author: "CuiweiG"
+date: "`r Sys.Date()`"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Introduction to SpatialDataR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+# Introduction
+
+`SpatialDataR` provides native R access to SpatialData Zarr stores
+without Python dependencies. The Python `spatialdata` library
+(Marconato et al. 2024 *Nature Methods*) defined a universal format
+for spatial omics — but R users had no way to read it without
+`reticulate`. This package fills that gap.
+
+## Why not reticulate?
+
+Using Python bridges introduces:
+
+- Conda/virtualenv dependency management
+- Type conversion overhead
+- Loss of lazy loading (DelayedArray)
+- No native SpatialExperiment integration
+
+`SpatialDataR` reads Zarr directly using `Rarr`/`pizzarr` and
+returns Bioconductor-native objects.
+
+# Quick start
+
+## Reading a SpatialData store
+
+```{r mock-store}
+library(SpatialDataR)
+
+# Create a mock SpatialData Zarr store for demonstration
+tmp <- tempfile()
+dir.create(file.path(tmp, "images", "morphology"), recursive = TRUE)
+dir.create(file.path(tmp, "points", "transcripts"), recursive = TRUE)
+dir.create(file.path(tmp, "tables", "adata"), recursive = TRUE)
+dir.create(file.path(tmp, "labels", "cells"), recursive = TRUE)
+
+# Write metadata (SpatialData spec)
+writeLines('{"spatialdata_attrs": {"version": "0.1"}}',
+    file.path(tmp, ".zattrs"))
+writeLines('{}', file.path(tmp, "images", "morphology", ".zattrs"))
+writeLines('{}', file.path(tmp, "points", "transcripts", ".zattrs"))
+writeLines('{}', file.path(tmp, "tables", "adata", ".zattrs"))
+writeLines('{}', file.path(tmp, "labels", "cells", ".zattrs"))
+
+# Read the store
+sd <- readSpatialData(tmp)
+sd
+```
+
+## Accessing elements
+
+```{r accessors}
+# Each element type has an accessor
+images(sd)
+spatialLabels(sd)
+spatialPoints(sd)
+shapes(sd)
+tables(sd)
+coordinateSystems(sd)
+```
+
+## Selective reading
+
+```{r selective}
+# Read only specific element types
+sd_img <- readSpatialData(tmp, elements = c("images", "labels"))
+sd_img
+```
+
+```{r cleanup-store, include=FALSE}
+unlink(tmp, recursive = TRUE)
+```
+
+# Coordinate transformations
+
+SpatialData stores include coordinate system definitions for
+aligning multi-modal data. `SpatialDataR` supports affine
+transformations natively.
+
+```{r transforms}
+library(S4Vectors)
+
+# Create point coordinates (in pixel space)
+pts <- DataFrame(x = c(100, 200, 300, 400),
+                 y = c(50, 150, 250, 350))
+
+# Define pixel-to-micron transformation (0.5 um/pixel + offset)
+pixel_to_um <- CoordinateTransform("affine",
+    affine = matrix(c(0.2125, 0, 10,
+                      0, 0.2125, 20,
+                      0, 0, 1), nrow = 3, byrow = TRUE),
+    input_cs = "pixels",
+    output_cs = "microns")
+pixel_to_um
+
+# Apply transformation
+pts_um <- transformCoords(pts, pixel_to_um)
+pts_um
+```
+
+# Architecture
+
+SpatialDataR maps SpatialData elements to Bioconductor objects:
+
+| SpatialData element | Zarr format | R representation |
+|---------------------|-------------|------------------|
+| images | Zarr arrays | DelayedArray (lazy) |
+| labels | Zarr arrays | DelayedArray (lazy) |
+| points | Parquet | DataFrame |
+| shapes | GeoParquet | DataFrame |
+| tables | AnnData/Zarr | SpatialExperiment |
+
+All reading is lazy by default — data stays on disk until
+explicitly accessed.
+
+# Working with real data
+
+To analyze a real Xenium or Visium dataset stored in SpatialData
+format:
+
+```r
+# Read a 10x Xenium dataset
+sd <- readSpatialData("xenium_breast_cancer.zarr")
+
+# Get the expression table as SpatialExperiment
+spe <- readSpatialTable("xenium_breast_cancer.zarr/tables/table")
+
+# Read transcript coordinates
+pts <- readParquetPoints("xenium_breast_cancer.zarr/points/transcripts")
+
+# Transform to physical coordinates
+ct <- coordinateSystems(sd)[["global"]]
+pts_um <- transformCoords(pts, ct)
+```
+
+# Session info
+
+```{r session}
+sessionInfo()
+```

@@ -68,6 +68,9 @@ NULL
 #'
 #' @name CoordinateTransform-class
 #' @exportClass CoordinateTransform
+#' @examples
+#' ct <- CoordinateTransform("affine", affine = diag(3) * 0.5)
+#' ct
 .CoordinateTransform <- setClass("CoordinateTransform",
     slots = list(
         type      = "character",

@@ -68,3 +68,11 @@ Access annotation tables
 
 Access coordinate systems
 }
+\examples{
+sd <- new("SpatialData")
+images(sd)
+spatialLabels(sd)
+spatialPoints(sd)
+shapes(sd)
+tables(sd)
+}

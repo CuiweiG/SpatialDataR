@@ -27,6 +27,10 @@ Represents an affine transformation between coordinate systems.
 \item{\code{output_cs}}{Character. Output coordinate system name.}
 }}
 
+\examples{
+ct <- CoordinateTransform("affine", affine = diag(3) * 0.5)
+ct
+}
 \references{
 Marconato L et al. (2024). SpatialData: an open and universal
 data framework for spatial omics. \emph{Nat Methods} 21:2196-2209.

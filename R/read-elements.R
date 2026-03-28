@@ -3,6 +3,7 @@
 
 #' @include AllClasses.R
 #' @importFrom S4Vectors DataFrame SimpleList
+#' @importFrom jsonlite fromJSON
 NULL
 
 #' Read a Zarr array lazily

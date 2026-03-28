@@ -13,6 +13,13 @@ NULL
 #' @return A \code{SimpleList} of image references.
 #' @export
 #' @rdname SpatialData-accessors
+#' @examples
+#' sd <- new("SpatialData")
+#' images(sd)
+#' spatialLabels(sd)
+#' spatialPoints(sd)
+#' shapes(sd)
+#' tables(sd)
 setGeneric("images", function(x) standardGeneric("images"))
 
 #' Access labels/segmentation masks

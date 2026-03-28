@@ -18,14 +18,14 @@ License: Artistic-2.0
 Depends: R (>= 4.4.0)
 Imports:
     methods,
-    S4Vectors (>= 0.32.0),
-    jsonlite,
-    utils
-Suggests:
     BiocGenerics,
+    S4Vectors (>= 0.32.0),
     SummarizedExperiment,
     SpatialExperiment,
     SingleCellExperiment,
+    jsonlite,
+    utils
+Suggests:
     DelayedArray,
     pizzarr,
     Rarr,
