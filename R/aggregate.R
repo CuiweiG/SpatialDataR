@@ -74,39 +74,56 @@ aggregatePoints <- function(
     }
 
     pts_df <- as.data.frame(points)
-    features <- pts_df[[feature_col]]
-    region_ids <- pts_df[[region_col]]
-    unique_features <- sort(unique(features))
-    unique_regions <- sort(unique(
-        as.data.frame(regions)[[region_col]]))
+    regions_df <- as.data.frame(regions)
+    mat <- .buildCountMatrix(
+        pts_df[[feature_col]],
+        pts_df[[region_col]],
+        regions_df[[region_col]])
+    if (fun == "mean") {
+        mat <- .normalizeCounts(mat,
+            pts_df[[region_col]])
+    }
+    result <- DataFrame(mat)
+    result[[region_col]] <- sort(unique(
+        regions_df[[region_col]]))
+    result
+}
 
-    ## Build count matrix
-    mat <- matrix(0L,
-        nrow = length(unique_regions),
-        ncol = length(unique_features))
-    rownames(mat) <- as.character(unique_regions)
-    colnames(mat) <- unique_features
-
+#' Build feature-by-region count matrix
+#' @param features Character vector of feature IDs.
+#' @param region_ids Vector of region assignments.
+#' @param valid_regions Vector of valid region IDs.
+#' @return Integer matrix.
+#' @keywords internal
+.buildCountMatrix <- function(features, region_ids,
+    valid_regions) {
+    uf <- sort(unique(features))
+    ur <- sort(unique(valid_regions))
+    mat <- matrix(0L, nrow = length(ur),
+        ncol = length(uf))
+    rownames(mat) <- as.character(ur)
+    colnames(mat) <- uf
     for (i in seq_along(features)) {
         rid <- as.character(region_ids[i])
-        fid <- features[i]
         if (rid %in% rownames(mat)) {
-            mat[rid, fid] <- mat[rid, fid] + 1L
+            mat[rid, features[i]] <-
+                mat[rid, features[i]] + 1L
         }
     }
+    mat
+}
 
-    if (fun == "mean" && region_col %in%
-        colnames(points)) {
-        region_sizes <- table(region_ids)
-        for (r in rownames(mat)) {
-            n <- as.integer(region_sizes[r])
-            if (!is.na(n) && n > 0L) {
-                mat[r, ] <- mat[r, ] / n
-            }
-        }
+#' Normalize count matrix by region sizes
+#' @param mat Count matrix.
+#' @param region_ids Region assignments.
+#' @return Normalized matrix.
+#' @keywords internal
+.normalizeCounts <- function(mat, region_ids) {
+    sizes <- table(region_ids)
+    for (r in rownames(mat)) {
+        n <- as.integer(sizes[r])
+        if (!is.na(n) && n > 0L)
+            mat[r, ] <- mat[r, ] / n
     }
-
-    result <- DataFrame(mat)
-    result[[region_col]] <- unique_regions
-    result
+    mat
 }

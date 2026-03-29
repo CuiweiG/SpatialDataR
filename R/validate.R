@@ -49,6 +49,52 @@ NULL
 #' result$elements
 validateSpatialData <- function(path, strict = FALSE) {
     path <- normalizePath(path, mustWork = TRUE)
+    za <- .validateTopZattrs(path)
+    elem <- .validateAllElements(path)
+
+    errors <- c(za$errors, elem$errors)
+    warnings <- c(za$warnings, elem$warnings)
+    if (nrow(elem$elements) == 0L) {
+        warnings <- c(warnings,
+            "No elements found in store")
+    }
+    valid <- length(errors) == 0L
+    if (strict && length(warnings) > 0L) valid <- FALSE
+    list(valid = valid, errors = errors,
+        warnings = warnings,
+        elements = elem$elements)
+}
+
+#' Validate top-level .zattrs
+#' @param path Zarr store root.
+#' @return List with errors and warnings.
+#' @keywords internal
+.validateTopZattrs <- function(path) {
+    errors <- character()
+    warnings <- character()
+    zf <- file.path(path, ".zattrs")
+    if (!file.exists(zf)) {
+        errors <- c(errors,
+            "Missing top-level .zattrs file")
+    } else {
+        meta <- .safeReadJSON(zf)
+        if (is.null(meta)) {
+            errors <- c(errors,
+                ".zattrs is not valid JSON")
+        } else if (is.null(
+            meta[["spatialdata_attrs"]])) {
+            warnings <- c(warnings,
+                ".zattrs missing 'spatialdata_attrs'")
+        }
+    }
+    list(errors = errors, warnings = warnings)
+}
+
+#' Validate all elements in store
+#' @param path Zarr store root.
+#' @return List with errors, warnings, elements df.
+#' @keywords internal
+.validateAllElements <- function(path) {
     errors <- character()
     warnings <- character()
     elements <- data.frame(
@@ -56,24 +102,6 @@ validateSpatialData <- function(path, strict = FALSE) {
         has_zattrs = logical(), has_data = logical(),
         has_transform = logical(),
         stringsAsFactors = FALSE)
-
-    ## 1. Top-level .zattrs
-    zattrs_file <- file.path(path, ".zattrs")
-    if (!file.exists(zattrs_file)) {
-        errors <- c(errors,
-            "Missing top-level .zattrs file")
-    } else {
-        meta <- .safeReadJSON(zattrs_file)
-        if (is.null(meta)) {
-            errors <- c(errors,
-                ".zattrs is not valid JSON")
-        } else if (is.null(meta[["spatialdata_attrs"]])) {
-            warnings <- c(warnings,
-                ".zattrs missing 'spatialdata_attrs' key")
-        }
-    }
-
-    ## 2. Scan element types
     for (etype in c("images", "labels", "points",
         "shapes", "tables")) {
         edir <- file.path(path, etype)
@@ -88,17 +116,8 @@ validateSpatialData <- function(path, strict = FALSE) {
             warnings <- c(warnings, row$warnings)
         }
     }
-
-    if (nrow(elements) == 0L) {
-        warnings <- c(warnings,
-            "No elements found in store")
-    }
-
-    valid <- length(errors) == 0L
-    if (strict && length(warnings) > 0L) valid <- FALSE
-
-    list(valid = valid, errors = errors,
-        warnings = warnings, elements = elements)
+    list(errors = errors, warnings = warnings,
+        elements = elements)
 }
 
 #' Validate a single element
@@ -108,60 +127,66 @@ validateSpatialData <- function(path, strict = FALSE) {
 #' @return List with summary, errors, warnings.
 #' @keywords internal
 .validateElement <- function(elem_path, etype, ename) {
-    errs <- character()
     warns <- character()
-    has_zattrs <- FALSE
-    has_data <- FALSE
-    has_transform <- FALSE
-
-    ## Check .zattrs
     za <- file.path(elem_path, ".zattrs")
-    if (file.exists(za)) {
-        has_zattrs <- TRUE
+    has_zattrs <- file.exists(za)
+    has_transform <- FALSE
+    if (has_zattrs) {
         meta <- .safeReadJSON(za)
         if (!is.null(meta)) {
             ct <- meta[["coordinateTransformations"]]
-            has_transform <- !is.null(ct) && length(ct) > 0L
+            has_transform <- !is.null(ct) &&
+                length(ct) > 0L
         }
     } else {
-        warns <- c(warns, paste0(
-            etype, "/", ename, ": missing .zattrs"))
+        warns <- paste0(etype, "/", ename,
+            ": missing .zattrs")
     }
+    dp <- .checkDataPresence(elem_path, etype, ename)
+    warns <- c(warns, dp$warnings)
 
-    ## Check data presence
+    list(
+        summary = data.frame(
+            type = etype, name = ename,
+            has_zattrs = has_zattrs,
+            has_data = dp$has_data,
+            has_transform = has_transform,
+            stringsAsFactors = FALSE),
+        errors = character(),
+        warnings = warns)
+}
+
+#' Check data file presence for an element
+#' @param elem_path Element directory path.
+#' @param etype Element type.
+#' @param ename Element name.
+#' @return List with has_data and warnings.
+#' @keywords internal
+.checkDataPresence <- function(elem_path, etype,
+    ename) {
+    warns <- character()
+    has_data <- FALSE
     if (etype %in% c("images", "labels")) {
-        zarrs <- list.files(elem_path,
-            "^[.]zarray$|^0",
-            recursive = TRUE)
-        has_data <- length(zarrs) > 0L
-        if (!has_data) warns <- c(warns, paste0(
-            etype, "/", ename,
-            ": no .zarray found (no raster data)"))
+        fls <- list.files(elem_path,
+            "^[.]zarray$|^0", recursive = TRUE)
+        has_data <- length(fls) > 0L
+        if (!has_data) warns <- paste0(etype, "/",
+            ename, ": no raster data")
     } else if (etype %in% c("points", "shapes")) {
         pq <- list.files(elem_path, "[.]parquet$",
             recursive = TRUE)
         csv <- list.files(elem_path, "[.]csv$",
             recursive = TRUE)
-        has_data <- length(pq) > 0L || length(csv) > 0L
-        if (!has_data) warns <- c(warns, paste0(
-            etype, "/", ename,
-            ": no Parquet/CSV data files"))
+        has_data <- length(pq) + length(csv) > 0L
+        if (!has_data) warns <- paste0(etype, "/",
+            ename, ": no data files")
     } else if (etype == "tables") {
-        has_obs <- dir.exists(file.path(elem_path, "obs"))
-        has_data <- has_obs
-        if (!has_obs) warns <- c(warns, paste0(
-            "tables/", ename, ": missing obs directory"))
+        has_data <- dir.exists(
+            file.path(elem_path, "obs"))
+        if (!has_data) warns <- paste0("tables/",
+            ename, ": missing obs")
     }
-
-    summary_row <- data.frame(
-        type = etype, name = ename,
-        has_zattrs = has_zattrs,
-        has_data = has_data,
-        has_transform = has_transform,
-        stringsAsFactors = FALSE)
-
-    list(summary = summary_row, errors = errs,
-        warnings = warns)
+    list(has_data = has_data, warnings = warns)
 }
 
 #' Safely read JSON, returning NULL on failure

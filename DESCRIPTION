@@ -15,7 +15,8 @@ Description: Provides native R infrastructure for reading
     (via 'Rarr' or 'pizzarr'), Parquet and CSV tabular data
     (via 'arrow'), affine coordinate transformations with
     composition and 3D support, bounding box spatial queries,
-    and coercion to 'SpatialExperiment'. Designed as a bridge
+    and optional coercion to 'SpatialExperiment' (when
+    installed). Designed as a bridge
     between the Python 'SpatialData' ecosystem and
     R/Bioconductor spatial analysis workflows.
 License: Artistic-2.0

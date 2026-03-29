@@ -149,34 +149,57 @@ readCSVElement <- function(csv_dir) {
     DataFrame(combined)
 }
 
-#' Convert a SpatialData table to SpatialExperiment
+#' Read a SpatialData annotation table
 #'
-#' Reads an AnnData-formatted table from a SpatialData Zarr store
-#' and converts to a \code{SpatialExperiment} object. Supports
-#' both Zarr-array and CSV-backed obs/var/X storage.
+#' Reads an AnnData-formatted table from a SpatialData Zarr
+#' store. By default returns a list with \code{obs} and
+#' \code{var} DataFrames. Optionally converts to
+#' \code{SpatialExperiment} when expression data and the
+#' package are available.
 #'
-#' @param table_path Path to a table Zarr group (AnnData format).
-#' @return A \code{SpatialExperiment} object, or a list with
-#'   \code{obs} and \code{var} DataFrames if expression data is
-#'   unavailable.
+#' @param table_path Path to a table Zarr group.
+#' @param as Character. Return type: \code{"list"} (default,
+#'   always works) or \code{"SpatialExperiment"} (requires
+#'   the \pkg{SpatialExperiment} package and an X matrix).
+#' @return A list with \code{obs} and \code{var} DataFrames
+#'   (when \code{as = "list"}), or a \code{SpatialExperiment}
+#'   (when \code{as = "SpatialExperiment"} and requirements
+#'   are met).
 #'
 #' @export
 #' @examples
 #' store <- system.file("extdata", "xenium_mini.zarr",
 #'     package = "SpatialDataR")
-#' tbl <- readSpatialTable(file.path(store, "tables", "table"))
-#' tbl
-readSpatialTable <- function(table_path) {
-    table_path <- normalizePath(table_path, mustWork = TRUE)
-    obs <- .readAnnDataGroup(file.path(table_path, "obs"))
-    var_df <- .readAnnDataGroup(file.path(table_path, "var"))
-    x_mat <- .readAnnDataX(file.path(table_path, "X"))
-    coords <- .readAnnDataX(file.path(table_path, "obsm", "spatial"))
+#' tbl <- readSpatialTable(
+#'     file.path(store, "tables", "table"))
+#' names(tbl)
+#' head(tbl$obs)
+readSpatialTable <- function(table_path,
+    as = c("list", "SpatialExperiment")) {
+    as <- match.arg(as)
+    table_path <- normalizePath(table_path,
+        mustWork = TRUE)
+    obs <- .readAnnDataGroup(
+        file.path(table_path, "obs"))
+    var_df <- .readAnnDataGroup(
+        file.path(table_path, "var"))
 
-    if (!is.null(x_mat) &&
-        requireNamespace("SpatialExperiment", quietly = TRUE)) {
-        .buildSpatialExperiment(x_mat, obs, var_df, coords)
+    if (as == "list") {
+        return(list(obs = obs, var = var_df))
+    }
+
+    x_mat <- .readAnnDataX(
+        file.path(table_path, "X"))
+    coords <- .readAnnDataX(
+        file.path(table_path, "obsm", "spatial"))
+
+    if (!is.null(x_mat) && requireNamespace(
+        "SpatialExperiment", quietly = TRUE)) {
+        .buildSpatialExperiment(
+            x_mat, obs, var_df, coords)
     } else {
+        message("Returning list: X matrix or ",
+            "SpatialExperiment not available.")
         list(obs = obs, var = var_df)
     }
 }

@@ -20,13 +20,18 @@ universal Zarr-based format for spatial omics, adopted
 by the scverse ecosystem and supported by 10x Genomics,
 Vizgen, and NanoString platforms. However, R/Bioconductor
 users currently require Python (via reticulate) to access
-these stores — creating friction in analysis workflows
+these stores �?creating friction in analysis workflows
 that otherwise run entirely in R.
 
-**SpatialDataR** provides the first complete, zero-Python
-R implementation of the SpatialData data model: store
-reading, coordinate transforms, spatial queries, region
-aggregation, and multi-sample operations.
+**SpatialDataR** provides a native R interface for
+reading and writing SpatialData-formatted Zarr stores,
+exposing their elements through Bioconductor-friendly
+data structures. Points and shapes are loaded as
+`DataFrame` objects; images and labels are represented
+as path references (loadable via `readZarrArray()` or
+`readZarrDelayed()`). Optional coercion to
+`SpatialExperiment` is available when the package is
+installed.
 
 ## Validation dataset
 
@@ -52,11 +57,11 @@ chosen because:
 
 ## 1. Native Zarr Store Reading
 
-> **No other R package can read SpatialData `.zarr`
-> stores.** `readSpatialData()` discovers all five
-> element types (images, labels, points, shapes, tables)
-> and two coordinate systems from a single function call,
-> returning Bioconductor-native objects.
+> `readSpatialData()` discovers all five element types
+> (images, labels, points, shapes, tables) and
+> coordinate systems from a single function call.
+> Points and shapes are loaded as `DataFrame`; images
+> and labels as path references.
 
 <div align="center">
 <img src="man/figures/fig1_store_reading.png"
@@ -81,7 +86,7 @@ sd
 #>   coordinate_systems: global
 ```
 
-**Comparison:**
+See also:
 [anndataR](https://bioconductor.org/packages/anndataR)
 reads AnnData h5ad/zarr but has no spatial element
 discovery or coordinate system support.
@@ -93,11 +98,9 @@ read SpatialData-format Zarr stores.
 
 ## 2. Bounding Box Spatial Query
 
-> **R equivalent of Python
-> `spatialdata.bounding_box_query()`.**
 > `bboxQuery()` subsets all spatial elements to a
-> rectangular region of interest — essential for
-> analyzing tissue microenvironments.
+> rectangular region of interest, analogous to
+> Python `spatialdata.bounding_box_query()`.
 
 <div align="center">
 <img src="man/figures/fig2_spatial_query.png"
@@ -116,7 +119,7 @@ sub <- bboxQuery(sd,
     ymin = 5400, ymax = 5800)
 ```
 
-**Comparison:**
+See also:
 [Voyager](https://bioconductor.org/packages/Voyager)
 (Moses & Pachter 2023) provides spatial autocorrelation
 statistics but no bounding box query on SpatialData
@@ -126,11 +129,10 @@ stores.
 
 ## 3. Region Aggregation
 
-> **Molecules → cell × gene matrix in one call.**
-> `aggregatePoints()` mirrors Python
-> `spatialdata.aggregate()`, converting transcript
-> coordinates into quantification matrices grouped by
-> spatial regions.
+> `aggregatePoints()` converts transcript coordinates
+> into quantification matrices grouped by spatial
+> regions, analogous to Python
+> `spatialdata.aggregate()`.
 
 <div align="center">
 <img src="man/figures/fig3_aggregation.png"
@@ -150,7 +152,7 @@ counts <- aggregatePoints(
 # Returns 160 x 268 DataFrame (region × gene)
 ```
 
-**Comparison:**
+See also:
 [MoleculeExperiment](https://bioconductor.org/packages/MoleculeExperiment)
 (Parker et al. 2023) stores molecule-level data but
 does not aggregate by arbitrary region DataFrames
@@ -160,12 +162,10 @@ from SpatialData stores.
 
 ## 4. Coordinate Transform Composition
 
-> **Full OME-NGFF transform support: identity, scale,
-> translation, affine, sequence.**
+> Supports OME-NGFF coordinate transform types:
+> identity, scale, translation, affine, sequence.
 > `composeTransforms()` chains transforms;
-> `invertTransform()` computes the inverse. Essential
-> for aligning multi-modal spatial data (e.g., imaging
-> + transcriptomics at different resolutions).
+> `invertTransform()` computes the inverse.
 
 <div align="center">
 <img src="man/figures/fig4_transforms.png"
@@ -173,7 +173,7 @@ from SpatialData stores.
 </div>
 
 > Five landmark coordinates in real MERFISH µm space
-> transformed from pixel (gray ×) to global (orange ●)
+> transformed from pixel (gray ×) to global (orange �?
 > via a composed scale + translation affine. Applied to
 > actual tissue coordinates from Moffitt et al. 2018.
 
@@ -185,23 +185,21 @@ ct <- composeTransforms(
     CoordinateTransform("affine",
         affine = matrix(c(1,0,500, 0,1,2000, 0,0,1),
             3, byrow = TRUE)))
-inv <- invertTransform(ct)  # global → pixel
+inv <- invertTransform(ct)  # global �?pixel
 ```
 
-**Comparison:**
-No existing R/Bioconductor package implements OME-NGFF
+See also:
+See also: Python spatialdata for OME-NGFF transforms.
 coordinate transforms. Users currently construct ad hoc
 affine matrices manually.
 
 ---
 
-## 5. Roundtrip: Read → Query → Write → Verify
+## 5. Roundtrip: Read �?Query �?Write �?Verify
 
-> **First R package with SpatialData write support.**
-> `writeSpatialData()` produces spec-compliant Zarr
-> stores that can be read by Python spatialdata. This
-> enables a pure-R analysis branch within a mixed
-> Python/R pipeline.
+> `writeSpatialData()` produces SpatialData-formatted
+> Zarr stores readable by Python spatialdata, enabling
+> R analysis branches within mixed Python/R pipelines.
 
 <div align="center">
 <img src="man/figures/fig5_roundtrip.png"
@@ -209,9 +207,8 @@ affine matrices manually.
 </div>
 
 > Full roundtrip on real MERFISH data: (**a**) Read
-> 3.7M transcripts → (**b**) spatial query selects
-> 649K in 600×600 µm ROI → write to new .zarr →
-> (**c**) read back and verify identical count.
+> 3.7M transcripts �?(**b**) spatial query selects
+> 649K in 600×600 µm ROI �?write to new .zarr �?> (**c**) read back and verify identical count.
 
 ```r
 sub <- bboxQuery(sd,
@@ -222,10 +219,10 @@ sd2 <- readSpatialData("subset.zarr")
 # 648,954 transcripts preserved
 ```
 
-**Comparison:**
-No existing R package can write SpatialData Zarr
+See also:
+See also: Python spatialdata for write support.
 stores. Users must export to CSV and convert in
-Python — `writeSpatialData()` eliminates this step.
+Python �?`writeSpatialData()` eliminates this step.
 
 ---
 

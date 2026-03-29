@@ -57,26 +57,15 @@ combineSpatialData <- function(..., sample_ids = NULL) {
         merged <- SimpleList()
         for (i in seq_len(n)) {
             sl <- accessor(objects[[i]])
-            if (length(sl) > 0L) {
-                prefix <- sample_ids[i]
-                new_names <- paste0(prefix, ".", names(sl))
-                names(sl) <- new_names
-                merged <- c(merged, sl)
-            }
+            if (length(sl) == 0L) next
+            names(sl) <- paste0(
+                sample_ids[i], ".", names(sl))
+            merged <- c(merged, sl)
         }
         merged
     }
-
-    ## Merge coordinate systems
-    all_cs <- list()
-    for (i in seq_len(n)) {
-        cs <- coordinateSystems(objects[[i]])
-        for (nm in names(cs)) {
-            key <- paste0(sample_ids[i], ".", nm)
-            all_cs[[key]] <- cs[[nm]]
-        }
-    }
-
+    all_cs <- .mergeCoordSystems(
+        objects, sample_ids, n)
     new("SpatialData",
         images = .merge(images),
         labels = .merge(spatialLabels),
@@ -84,10 +73,25 @@ combineSpatialData <- function(..., sample_ids = NULL) {
         shapes = .merge(shapes),
         tables = .merge(tables),
         coordinate_systems = all_cs,
-        metadata = list(
-            sample_ids = sample_ids,
-            n_samples = n),
+        metadata = list(sample_ids = sample_ids),
         path = NA_character_)
+}
+
+#' Merge coordinate systems with sample prefixes
+#' @param objects List of SpatialData.
+#' @param sample_ids Character vector.
+#' @param n Number of objects.
+#' @return Named list.
+#' @keywords internal
+.mergeCoordSystems <- function(objects, sample_ids, n) {
+    cs <- list()
+    for (i in seq_len(n)) {
+        for (nm in names(coordinateSystems(objects[[i]]))) {
+            cs[[paste0(sample_ids[i], ".", nm)]] <-
+                coordinateSystems(objects[[i]])[[nm]]
+        }
+    }
+    cs
 }
 
 #' Filter SpatialData by sample

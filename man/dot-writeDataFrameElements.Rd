@@ -13,6 +13,9 @@
 
 \item{type_dir}{"points" or "shapes".}
 }
+\value{
+Invisible \code{NULL}.
+}
 \description{
 Write DataFrame elements (points/shapes)
 }

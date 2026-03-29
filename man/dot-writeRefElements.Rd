@@ -13,6 +13,9 @@
 
 \item{type_dir}{"images" or "labels".}
 }
+\value{
+Invisible \code{NULL}.
+}
 \description{
 Write image/label references
 }

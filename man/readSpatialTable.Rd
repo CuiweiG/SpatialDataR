@@ -2,26 +2,35 @@
 % Please edit documentation in R/read-elements.R
 \name{readSpatialTable}
 \alias{readSpatialTable}
-\title{Convert a SpatialData table to SpatialExperiment}
+\title{Read a SpatialData annotation table}
 \usage{
-readSpatialTable(table_path)
+readSpatialTable(table_path, as = c("list", "SpatialExperiment"))
 }
 \arguments{
-\item{table_path}{Path to a table Zarr group (AnnData format).}
+\item{table_path}{Path to a table Zarr group.}
+
+\item{as}{Character. Return type: \code{"list"} (default,
+always works) or \code{"SpatialExperiment"} (requires
+the \pkg{SpatialExperiment} package and an X matrix).}
 }
 \value{
-A \code{SpatialExperiment} object, or a list with
-  \code{obs} and \code{var} DataFrames if expression data is
-  unavailable.
+A list with \code{obs} and \code{var} DataFrames
+  (when \code{as = "list"}), or a \code{SpatialExperiment}
+  (when \code{as = "SpatialExperiment"} and requirements
+  are met).
 }
 \description{
-Reads an AnnData-formatted table from a SpatialData Zarr store
-and converts to a \code{SpatialExperiment} object. Supports
-both Zarr-array and CSV-backed obs/var/X storage.
+Reads an AnnData-formatted table from a SpatialData Zarr
+store. By default returns a list with \code{obs} and
+\code{var} DataFrames. Optionally converts to
+\code{SpatialExperiment} when expression data and the
+package are available.
 }
 \examples{
 store <- system.file("extdata", "xenium_mini.zarr",
     package = "SpatialDataR")
-tbl <- readSpatialTable(file.path(store, "tables", "table"))
-tbl
+tbl <- readSpatialTable(
+    file.path(store, "tables", "table"))
+names(tbl)
+head(tbl$obs)
 }

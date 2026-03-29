@@ -106,6 +106,7 @@ writeSpatialData <- function(sd, path,
 #' @param sl SimpleList of DataFrames or refs.
 #' @param base_path Zarr store root.
 #' @param type_dir "points" or "shapes".
+#' @return Invisible \code{NULL}.
 #' @keywords internal
 .writeDataFrameElements <- function(sl, base_path,
     type_dir) {
@@ -144,6 +145,7 @@ writeSpatialData <- function(sd, path,
 #' Write table elements
 #' @param sl SimpleList of table objects.
 #' @param base_path Zarr store root.
+#' @return Invisible \code{NULL}.
 #' @keywords internal
 .writeTableElements <- function(sl, base_path) {
     if (length(sl) == 0L) return(invisible(NULL))
@@ -186,6 +188,7 @@ writeSpatialData <- function(sd, path,
 #' @param sl SimpleList of element refs.
 #' @param base_path Zarr store root.
 #' @param type_dir "images" or "labels".
+#' @return Invisible \code{NULL}.
 #' @keywords internal
 .writeRefElements <- function(sl, base_path,
     type_dir) {

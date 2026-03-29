@@ -11,6 +11,9 @@
 
 \item{base_path}{Zarr store root.}
 }
+\value{
+Invisible \code{NULL}.
+}
 \description{
 Write table elements
 }
