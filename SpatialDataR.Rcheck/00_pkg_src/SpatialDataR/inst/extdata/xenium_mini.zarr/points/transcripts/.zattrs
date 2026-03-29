@@ -1,9 +1,0 @@
-{
-  "coordinateTransformations": [
-    {"type": "identity"}
-  ],
-  "spatialdata_attrs": {
-    "feature_key": "gene",
-    "instance_key": "cell_id"
-  }
-}
