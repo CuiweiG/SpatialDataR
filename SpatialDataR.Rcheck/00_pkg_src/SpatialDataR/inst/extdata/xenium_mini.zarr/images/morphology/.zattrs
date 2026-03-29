@@ -1,0 +1,13 @@
+{
+  "coordinateTransformations": [
+    {"type": "scale", "scale": [0.2125, 0.2125]}
+  ],
+  "multiscales": [{
+    "axes": [
+      {"name": "c", "type": "channel"},
+      {"name": "y", "type": "space"},
+      {"name": "x", "type": "space"}
+    ],
+    "datasets": [{"path": "scale0"}]
+  }]
+}
