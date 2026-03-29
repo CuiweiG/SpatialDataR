@@ -43,11 +43,12 @@ aggregation, and multi-sample operations.
     width="700" alt="Store reading"/>
 </div>
 
-> Multi-modal spatial map read from a SpatialData Zarr
-> store. Transcripts (dots) overlaid on cell boundaries
-> (colored outlines) with cell type annotations, loaded
-> via `readSpatialData()`. Data: simulated Xenium breast
-> cancer (50 cells, 10 genes, 500 transcripts).
+> Spatial transcript map of mouse primary visual
+> cortex read from a SpatialData Zarr store via
+> `readSpatialData()`. **3,714,642 transcripts**,
+> **268 genes**, 8 cortical layers. Data: MERFISH
+> (Moffitt et al. 2018 *Science*; CC0 1.0).
+> Top 6 genes colored; remaining in gray.
 
 ```r
 library(SpatialDataR)
@@ -84,9 +85,10 @@ read SpatialData-format Zarr stores.
     width="700" alt="Spatial query"/>
 </div>
 
-> Bounding box query selecting 114/500 transcripts
-> within the ROI [1, 3] × [1, 3] µm (pink box). Gray:
-> excluded points. Colored: top 4 genes within ROI.
+> Bounding box query on real MERFISH data: 400×400 µm
+> ROI (orange dashed box) selects a subset of 3.7M
+> transcripts. (**a**) Full dataset overview.
+> (**b**) Zoomed ROI with gene identity revealed.
 
 ```r
 sub <- bboxQuery(sd,
@@ -116,11 +118,11 @@ stores.
     width="700" alt="Aggregation"/>
 </div>
 
-> Cell × gene expression heatmap (row-normalized
-> fractions) produced by `aggregatePoints()`, grouped
-> by cell type. 50 cells × 10 genes. This is the
-> critical bridge from molecule-level to cell-level
-> analysis.
+> Gene enrichment dot plot across 8 cortical layers
+> of mouse VISp, produced by `aggregatePoints()` on
+> 3.7M real MERFISH transcripts. Dot size = percentage
+> of transcripts; color = fraction. Shows layer-specific
+> gene expression patterns from real spatial data.
 
 ```r
 counts <- aggregatePoints(
@@ -151,11 +153,10 @@ from SpatialData stores.
     width="700" alt="Transforms"/>
 </div>
 
-> Five landmark points transformed from pixel
-> coordinates (gray ×) to global coordinates
-> (orange ●) via a composed scale + translation.
-> The composed transform is a single affine matrix
-> computed by `composeTransforms()`.
+> Five landmark coordinates in real MERFISH µm space
+> transformed from pixel (gray ×) to global (orange ●)
+> via a composed scale + translation affine. Applied to
+> actual tissue coordinates from Moffitt et al. 2018.
 
 ```r
 ct <- composeTransforms(
@@ -222,3 +223,8 @@ remotes::install_github("CuiweiG/SpatialDataR")
    consistent infrastructure for molecule-resolved
    spatial omics. *Bioinformatics* 39:btad550.
    doi:[10.1093/bioinformatics/btad550](https://doi.org/10.1093/bioinformatics/btad550)
+
+6. Moffitt JR et al. (2018). Molecular, spatial, and
+   functional single-cell profiling of the
+   hypothalamic preoptic region. *Science* 362:eaau5324.
+   doi:[10.1126/science.aau5324](https://doi.org/10.1126/science.aau5324)
