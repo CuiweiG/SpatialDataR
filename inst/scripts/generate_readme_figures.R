@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
-## SpatialDataR README figures �?Nature Methods standard
 .libPaths("C:/Users/win10/R/win-library/4.4")
 library(SpatialDataR)
 library(S4Vectors)
 library(ggplot2)
+library(patchwork)
 
 store <- system.file("extdata", "xenium_mini.zarr",
     package = "SpatialDataR")
@@ -16,16 +16,10 @@ shp_ann <- merge(shp, obs, by = "cell_id")
 od <- "man/figures"
 if (!dir.exists(od)) dir.create(od, recursive = TRUE)
 
-## Palettes: maximally distinct for CVD
-cell_pal <- c(
-    Epithelial = "#0072B2",   # blue
-    Stromal = "#D55E00",      # vermillion
-    Immune = "#F0E442",       # yellow
-    Endothelial = "#000000")  # black
-
-## Top 5 genes, shapes + colors for redundant encoding
-top5 <- names(sort(table(pts$gene),
-    decreasing = TRUE))[1:5]
+cell_pal <- c(Epithelial = "#0072B2",
+    Stromal = "#D55E00", Immune = "#F0E442",
+    Endothelial = "#000000")
+top5 <- names(sort(table(pts$gene), TRUE))[1:5]
 gene_pal <- c("#0072B2", "#D55E00", "#009E73",
     "#CC79A7", "#E69F00")
 names(gene_pal) <- top5
@@ -33,81 +27,98 @@ gene_shp <- c(16, 17, 15, 18, 3)
 names(gene_shp) <- top5
 
 th <- theme_classic(base_size = 8) +
-    theme(
-        axis.line = element_line(linewidth = 0.3),
+    theme(axis.line = element_line(linewidth = 0.3),
         axis.ticks = element_line(linewidth = 0.3),
         axis.title = element_text(size = 8),
         axis.text = element_text(size = 7,
             color = "black"),
-        plot.title = element_text(size = 9,
-            face = "bold",
-            margin = margin(0, 0, 3, 0)),
-        plot.subtitle = element_text(size = 7,
-            color = "grey35", face = "italic",
-            margin = margin(0, 0, 6, 0)),
         plot.margin = margin(8, 10, 8, 8))
 
+pts$gene5 <- ifelse(pts$gene %in% top5, pts$gene, NA)
+pts_top <- pts[!is.na(pts$gene5), ]
+
 ## ==========================================================
-## Fig 1: Store Reading �?show ALL data types clearly
+## Fig 1: 3-panel — cells | transcripts | combined
 ## ==========================================================
 cat("fig1 ...\n")
 
-## Color transcripts by top 5 genes
-pts$gene5 <- ifelse(pts$gene %in% top5,
-    pts$gene, NA_character_)
-pts_top <- pts[!is.na(pts$gene5), ]
+p1a <- ggplot(shp_ann, aes(x = x, y = y,
+    color = cell_type)) +
+    geom_point(shape = 1, size = 6, stroke = 0.8) +
+    scale_color_manual(values = cell_pal, name = NULL) +
+    coord_equal(xlim = c(-0.1, 4.5),
+        ylim = c(-0.1, 4.5)) +
+    labs(subtitle = "Shapes: 50 cells",
+        x = expression(mu*"m"),
+        y = expression(mu*"m")) +
+    th + theme(legend.position = "bottom",
+        legend.text = element_text(size = 7),
+        plot.subtitle = element_text(size = 8,
+            face = "bold"))
 
-fig1 <- ggplot() +
-    ## Cell boundaries: filled + outlined, uniform size
+p1b <- ggplot(pts_top, aes(x = x, y = y,
+    color = gene5, shape = gene5)) +
+    geom_point(size = 1.8, alpha = 0.8) +
+    scale_color_manual(values = gene_pal, name = NULL) +
+    scale_shape_manual(values = gene_shp, name = NULL) +
+    coord_equal(xlim = c(-0.1, 4.5),
+        ylim = c(-0.1, 4.5)) +
+    labs(subtitle = "Points: 500 transcripts",
+        x = expression(mu*"m"), y = NULL) +
+    th + theme(legend.position = "bottom",
+        legend.text = element_text(size = 7),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank(),
+        plot.subtitle = element_text(size = 8,
+            face = "bold"))
+
+p1c <- ggplot() +
     geom_point(data = shp_ann,
         aes(x = x, y = y, fill = cell_type),
-        shape = 21, size = 4, stroke = 0.5,
-        alpha = 0.3, color = "grey40") +
-    ## Transcripts: colored by gene, different shapes
+        shape = 21, size = 5, stroke = 0.3,
+        alpha = 0.2, color = "grey50") +
     geom_point(data = pts_top,
-        aes(x = x, y = y,
-            color = gene5, shape = gene5),
-        size = 1.2, alpha = 0.8) +
+        aes(x = x, y = y, color = gene5,
+            shape = gene5),
+        size = 1.5, alpha = 0.75) +
     scale_fill_manual(values = cell_pal,
-        name = "Cell type") +
+        guide = "none") +
     scale_color_manual(values = gene_pal,
-        name = "Transcript") +
+        guide = "none") +
     scale_shape_manual(values = gene_shp,
-        name = "Transcript") +
-    coord_equal(xlim = c(-0.2, 4.6),
-        ylim = c(-0.2, 4.6)) +
-    guides(
-        fill = guide_legend(order = 1,
-            override.aes = list(alpha = 0.5,
-                size = 3)),
-        color = guide_legend(order = 2),
-        shape = guide_legend(order = 2)) +
-    labs(
+        guide = "none") +
+    coord_equal(xlim = c(-0.1, 4.5),
+        ylim = c(-0.1, 4.5)) +
+    labs(subtitle = "Combined overlay",
+        x = expression(mu*"m"), y = NULL) +
+    th + theme(
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank(),
+        plot.subtitle = element_text(size = 8,
+            face = "bold"))
+
+fig1 <- p1a + p1b + p1c +
+    plot_layout(ncol = 3) +
+    plot_annotation(
         title = "Native SpatialData Zarr Reading",
         subtitle = paste0(
-            nrow(pts), " transcripts + ",
-            nrow(shp), " cells + ",
-            length(unique(pts$gene)),
-            " genes from one readSpatialData() call"),
-        x = expression("x ("*mu*"m)"),
-        y = expression("y ("*mu*"m)")) +
-    th +
-    theme(
-        legend.position = "right",
-        legend.box = "vertical",
-        legend.key.size = unit(8, "pt"),
-        legend.text = element_text(size = 6.5),
-        legend.title = element_text(size = 7,
-            face = "bold"),
-        legend.spacing.y = unit(2, "pt"),
-        legend.margin = margin(0, 0, 0, 0))
+            "readSpatialData(): one call reads ",
+            "shapes, points, tables, images, labels"),
+        theme = theme(
+            plot.title = element_text(size = 11,
+                face = "bold"),
+            plot.subtitle = element_text(size = 8,
+                color = "grey35",
+                face = "italic")))
 
 ggsave(file.path(od, "fig1_store_reading.png"), fig1,
-    width = 180, height = 130, units = "mm",
+    width = 220, height = 95, units = "mm",
     dpi = 300, bg = "white")
 
 ## ==========================================================
-## Fig 2: Bbox query �?clear before/after
+## Fig 2: Bbox — left=full, right=queried
 ## ==========================================================
 cat("fig2 ...\n")
 
@@ -115,62 +126,63 @@ qx <- c(1, 3); qy <- c(1, 3)
 pts$inside <- pts$x >= qx[1] & pts$x <= qx[2] &
     pts$y >= qy[1] & pts$y <= qy[2]
 n_in <- sum(pts$inside)
-pts_in <- pts[pts$inside & pts$gene %in% top5, ]
 
-## Excluded points — show them clearly as red X marks
-pts_out <- pts[!pts$inside, ]
-
-fig2 <- ggplot() +
-    ## Excluded: visible red-gray crosses
-    geom_point(data = pts_out,
-        aes(x = x, y = y),
-        size = 1.2, alpha = 0.4, color = "#999999",
-        shape = 4, stroke = 0.4) +
-    ## ROI box with light fill
+## Left: all points with box outline
+p2a <- ggplot(pts, aes(x = x, y = y)) +
+    geom_point(size = 0.6, alpha = 0.4,
+        color = "grey40") +
     annotate("rect", xmin = qx[1], xmax = qx[2],
         ymin = qy[1], ymax = qy[2],
-        fill = "#0072B2", alpha = 0.06,
-        color = "#0072B2", linewidth = 0.8) +
-    ## Selected: large colored shapes
-    geom_point(data = pts_in,
-        aes(x = x, y = y, color = gene5,
-            shape = gene5),
-        size = 2.2, alpha = 0.9) +
+        fill = NA, color = "#D55E00",
+        linewidth = 0.8, linetype = "dashed") +
+    coord_equal(xlim = c(-0.1, 4.5),
+        ylim = c(-0.1, 4.5)) +
+    labs(subtitle = paste0("All ", nrow(pts),
+        " transcripts"),
+        x = expression(mu*"m"),
+        y = expression(mu*"m")) +
+    th + theme(plot.subtitle = element_text(size = 8,
+        face = "bold"))
+
+## Right: only inside points, colored by gene
+pts_sel <- pts[pts$inside & !is.na(pts$gene5), ]
+
+p2b <- ggplot(pts_sel, aes(x = x, y = y,
+    color = gene5, shape = gene5)) +
+    geom_point(size = 2.5, alpha = 0.9) +
     scale_color_manual(values = gene_pal,
-        name = "Selected") +
+        name = NULL) +
     scale_shape_manual(values = gene_shp,
-        name = "Selected") +
-    coord_equal(xlim = c(-0.2, 4.6),
-        ylim = c(-0.2, 4.6)) +
-    annotate("label", x = 3.15, y = 3.15,
-        label = paste0(n_in, " / ", nrow(pts)),
-        size = 3.5, hjust = 0, color = "#0072B2",
-        fontface = "bold", fill = "white",
-        label.size = 0) +
-    annotate("text", x = 4.0, y = 0.2,
-        label = "excluded", size = 2.5,
-        color = "#999999", fontface = "italic") +
-    labs(
+        name = NULL) +
+    coord_equal(xlim = c(qx[1] - 0.1, qx[2] + 0.1),
+        ylim = c(qy[1] - 0.1, qy[2] + 0.1)) +
+    labs(subtitle = paste0(n_in,
+        " selected in ROI"),
+        x = expression(mu*"m"), y = NULL) +
+    th + theme(legend.position = "right",
+        legend.text = element_text(size = 7),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank(),
+        plot.subtitle = element_text(size = 8,
+            face = "bold", color = "#D55E00"))
+
+fig2 <- p2a + p2b +
+    plot_layout(ncol = 2, widths = c(1, 1)) +
+    plot_annotation(
         title = "Bounding Box Spatial Query",
         subtitle = paste0(
-            "bboxQuery(): select ", n_in, "/",
-            nrow(pts),
-            " transcripts in ROI"),
-        x = expression("x ("*mu*"m)"),
-        y = expression("y ("*mu*"m)")) +
-    th +
-    theme(
-        legend.position = c(0.9, 0.2),
-        legend.background = element_rect(
-            fill = "white", color = "grey80",
-            linewidth = 0.3),
-        legend.key.size = unit(8, "pt"),
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 7,
-            face = "bold"))
+            "bboxQuery(): ", n_in, "/", nrow(pts),
+            " transcripts in [1,3] x [1,3]"),
+        theme = theme(
+            plot.title = element_text(size = 11,
+                face = "bold"),
+            plot.subtitle = element_text(size = 8,
+                color = "grey35",
+                face = "italic")))
 
 ggsave(file.path(od, "fig2_spatial_query.png"), fig2,
-    width = 170, height = 130, units = "mm",
+    width = 200, height = 95, units = "mm",
     dpi = 300, bg = "white")
 
 ## ==========================================================
@@ -186,7 +198,6 @@ gene_cols <- setdiff(colnames(counts_r), "cell_id")
 counts_ann <- merge(counts_r,
     obs[, c("cell_id", "cell_type")], by = "cell_id")
 counts_ann <- counts_ann[order(counts_ann$cell_type), ]
-
 rs <- rowSums(counts_ann[, gene_cols])
 rs[rs == 0] <- 1
 cn <- counts_ann
@@ -194,8 +205,7 @@ cn[, gene_cols] <- counts_ann[, gene_cols] / rs
 
 hm <- do.call(rbind, lapply(seq_len(nrow(cn)),
     function(i) {
-    data.frame(
-        cell = factor(i),
+    data.frame(cell = factor(i),
         cell_type = cn$cell_type[i],
         gene = factor(gene_cols, levels = gene_cols),
         frac = as.numeric(cn[i, gene_cols]))
@@ -209,22 +219,17 @@ fig3 <- ggplot(hm, aes(x = gene, y = cell,
     geom_tile(color = NA) +
     scale_fill_gradient(low = "grey98",
         high = "#0072B2", name = "Fraction",
-        limits = c(0, 0.5),
-        oob = scales::squish,
+        limits = c(0, 0.5), oob = scales::squish,
         breaks = c(0, 0.25, 0.5)) +
     facet_grid(cell_type ~ ., scales = "free_y",
         space = "free_y", switch = "y") +
-    labs(
-        title = "Region Aggregation",
-        subtitle = paste0(
-            "aggregatePoints(): ",
-            nrow(cn), " cells \u00D7 ",
-            length(gene_cols),
-            " genes count matrix"),
+    labs(title = "Region Aggregation",
+        subtitle = paste0("aggregatePoints(): ",
+            nrow(cn), " cells x ",
+            length(gene_cols), " genes"),
         x = NULL, y = NULL) +
     theme_minimal(base_size = 8) +
-    theme(
-        axis.text.x = element_text(angle = 45,
+    theme(axis.text.x = element_text(angle = 45,
             hjust = 1, size = 7, color = "black"),
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
@@ -238,16 +243,14 @@ fig3 <- ggplot(hm, aes(x = gene, y = cell,
             face = "bold"),
         panel.grid = element_blank(),
         panel.spacing = unit(1, "pt"),
-        plot.title = element_text(size = 9,
-            face = "bold",
-            margin = margin(0, 0, 3, 0)),
-        plot.subtitle = element_text(size = 7,
-            color = "grey35", face = "italic",
-            margin = margin(0, 0, 6, 0)),
+        plot.title = element_text(size = 11,
+            face = "bold"),
+        plot.subtitle = element_text(size = 8,
+            color = "grey35", face = "italic"),
         plot.margin = margin(8, 10, 8, 8))
 
 ggsave(file.path(od, "fig3_aggregation.png"), fig3,
-    width = 170, height = 140, units = "mm",
+    width = 160, height = 120, units = "mm",
     dpi = 300, bg = "white")
 
 ## ==========================================================
@@ -266,82 +269,71 @@ ct_comp <- composeTransforms(
     CoordinateTransform("affine",
         affine = matrix(c(1, 0, 1, 0, 1, 0.5, 0, 0, 1),
             nrow = 3, byrow = TRUE)))
-
 rep_out <- as.data.frame(transformCoords(
-    DataFrame(x = rep_pts$x, y = rep_pts$y),
-    ct_comp))
+    DataFrame(x = rep_pts$x, y = rep_pts$y), ct_comp))
 
-arr <- data.frame(
-    x = rep_pts$x, y = rep_pts$y,
+arr <- data.frame(x = rep_pts$x, y = rep_pts$y,
     xend = rep_out$x, yend = rep_out$y,
     id = rep_pts$id)
 
 fig4 <- ggplot() +
-    geom_point(data = rep_pts,
-        aes(x = x, y = y),
-        shape = 4, size = 3.5, stroke = 0.8,
+    geom_point(data = rep_pts, aes(x = x, y = y),
+        shape = 4, size = 4, stroke = 0.9,
         color = "grey50") +
     geom_text(data = rep_pts,
-        aes(x = x - 0.8, y = y, label = id),
-        size = 2.8, color = "grey50",
-        fontface = "bold") +
+        aes(x = x - 0.9, y = y, label = id),
+        size = 3, color = "grey50", fontface = "bold") +
     geom_segment(data = arr,
         aes(x = x, y = y, xend = xend, yend = yend),
-        arrow = arrow(length = unit(4, "pt"),
+        arrow = arrow(length = unit(5, "pt"),
             type = "closed"),
-        color = "grey45", linewidth = 0.35) +
-    geom_point(data = rep_out,
-        aes(x = x, y = y),
-        shape = 16, size = 3.5, color = "#D55E00") +
+        color = "grey40", linewidth = 0.4) +
+    geom_point(data = rep_out, aes(x = x, y = y),
+        shape = 16, size = 4, color = "#D55E00") +
     geom_text(data = data.frame(
-        x = rep_out$x + 0.8, y = rep_out$y,
+        x = rep_out$x + 0.9, y = rep_out$y,
         id = rep_pts$id),
         aes(x = x, y = y, label = id),
-        size = 2.8, color = "#D55E00",
+        size = 3, color = "#D55E00",
         fontface = "bold") +
-    annotate("text", x = 16, y = 19,
-        label = "pixels", size = 3,
-        color = "grey50", fontface = "italic") +
-    annotate("text", x = 3, y = 0.8,
-        label = "global", size = 3,
-        color = "#D55E00", fontface = "bold.italic") +
+    annotate("text", x = 16, y = 19, label = "pixels",
+        size = 3.5, color = "grey50",
+        fontface = "italic") +
+    annotate("text", x = 3, y = 0.8, label = "global",
+        size = 3.5, color = "#D55E00",
+        fontface = "bold.italic") +
     coord_equal(xlim = c(-1, 20), ylim = c(-1, 20)) +
-    labs(
-        title = "Transform Composition",
-        subtitle = paste0(
-            "composeTransforms(): ",
-            "scale(0.2125) + translate(1, 0.5)"),
+    labs(title = "Transform Composition",
+        subtitle = "composeTransforms(): scale(0.2125) + translate(1, 0.5)",
         x = "x", y = "y") +
-    th
+    th + theme(
+        plot.title = element_text(size = 11,
+            face = "bold"),
+        plot.subtitle = element_text(size = 8,
+            color = "grey35", face = "italic"))
 
 ggsave(file.path(od, "fig4_transforms.png"), fig4,
-    width = 160, height = 130, units = "mm",
+    width = 140, height = 120, units = "mm",
     dpi = 300, bg = "white")
 
-## ==========================================================
-## Combined 4-panel
-## ==========================================================
+## Combined
 cat("combined ...\n")
-library(patchwork)
-
 combined <- (
-    (fig1 + labs(title = NULL, subtitle = NULL,
-        tag = "a") +
+    (p1a + labs(subtitle = NULL, tag = "a") +
         theme(legend.position = "none")) |
-    (fig2 + labs(title = NULL, subtitle = NULL,
-        tag = "b") +
-        theme(legend.position = "none"))
+    (p1b + labs(subtitle = NULL, tag = "b") +
+        theme(legend.position = "none")) |
+    (p1c + labs(subtitle = NULL, tag = "c"))
 ) / (
-    (fig3 + labs(title = NULL, subtitle = NULL,
-        tag = "c")) |
-    (fig4 + labs(title = NULL, subtitle = NULL,
-        tag = "d"))
+    (p2a + labs(subtitle = NULL, tag = "d")) |
+    (p2b + labs(subtitle = NULL, tag = "e") +
+        theme(legend.position = "none"))
 ) + plot_layout(heights = c(1, 1)) &
     theme(plot.tag = element_text(size = 10,
         face = "bold"))
 
 ggsave(file.path(od, "fig1_spatial_overview.png"),
-    combined, width = 180, height = 160, units = "mm",
+    combined, width = 220, height = 160, units = "mm",
     dpi = 300, bg = "white")
 
 cat("\nDone:\n")
