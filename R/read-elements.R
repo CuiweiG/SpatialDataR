@@ -212,58 +212,60 @@ readSpatialTable <- function(table_path) {
     if (!dir.exists(group_path)) return(DataFrame())
 
     ## Strategy 1: CSV files present
-    csv_files <- list.files(
-        group_path,
-        pattern = "[.]csv$",
-        full.names = TRUE
-    )
+    csv_files <- list.files(group_path,
+        pattern = "[.]csv$", full.names = TRUE)
     if (length(csv_files) > 0L) {
-        ## Read the first CSV (AnnData stores one table per group)
         df <- utils::read.csv(csv_files[1L],
             stringsAsFactors = FALSE)
         return(DataFrame(df))
     }
 
     ## Strategy 2: Zarr-based columnar storage
+    col_order <- .discoverZarrColumns(group_path)
+    if (length(col_order) == 0L) return(DataFrame())
+    .readZarrColumns(group_path, col_order)
+}
+
+#' Discover column order from Zarr group .zattrs
+#' @param group_path Path to a Zarr group.
+#' @return Character vector of column names.
+#' @keywords internal
+.discoverZarrColumns <- function(group_path) {
     zattrs <- file.path(group_path, ".zattrs")
-    if (!file.exists(zattrs)) return(DataFrame())
+    if (!file.exists(zattrs)) return(character())
 
     meta <- jsonlite::fromJSON(zattrs, simplifyVector = FALSE)
     col_order <- meta[["column-order"]]
     if (is.null(col_order)) {
-        col_order <- meta[["_index"]]
-        if (!is.null(col_order)) {
-            col_order <- list(col_order)
-        }
+        idx <- meta[["_index"]]
+        if (!is.null(idx)) return(list(idx))
     }
     if (is.null(col_order)) {
-        ## Discover columns from subdirectories
-        subdirs <- list.dirs(
-            group_path,
-            recursive = FALSE,
-            full.names = FALSE
-        )
+        subdirs <- list.dirs(group_path,
+            recursive = FALSE, full.names = FALSE)
         col_order <- subdirs[subdirs != ".zattrs"]
     }
-    if (length(col_order) == 0L) return(DataFrame())
+    col_order
+}
 
+#' Read Zarr columnar arrays into a DataFrame
+#' @param group_path Path to a Zarr group.
+#' @param col_order Character vector of column names.
+#' @return A \code{DataFrame}.
+#' @keywords internal
+.readZarrColumns <- function(group_path, col_order) {
     cols <- lapply(col_order, function(col) {
         col_path <- file.path(group_path, col)
         if (dir.exists(col_path)) {
-            tryCatch(
-                as.vector(readZarrArray(col_path)),
-                error = function(e) NA
-            )
+            tryCatch(as.vector(readZarrArray(col_path)),
+                error = function(e) NA)
         } else {
             NA
         }
     })
     names(cols) <- col_order
-    valid <- vapply(
-        cols,
-        function(x) !all(is.na(x)),
-        logical(1)
-    )
+    valid <- vapply(cols,
+        function(x) !all(is.na(x)), logical(1))
     cols <- cols[valid]
     if (length(cols) == 0L) return(DataFrame())
     DataFrame(cols)

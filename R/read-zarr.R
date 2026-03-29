@@ -144,64 +144,47 @@ readSpatialData <- function(path, elements = NULL, ...) {
 #' @keywords internal
 .readPointsOrShapes <- function(dir_path, type) {
     if (!dir.exists(dir_path)) return(SimpleList())
-
     element_names <- list.dirs(
-        dir_path, recursive = FALSE, full.names = FALSE
-    )
+        dir_path, recursive = FALSE, full.names = FALSE)
     if (length(element_names) == 0L) return(SimpleList())
 
     elements <- lapply(element_names, function(name) {
         elem_path <- file.path(dir_path, name)
-
-        ## Read metadata
-        zattrs <- file.path(elem_path, ".zattrs")
-        meta <- if (file.exists(zattrs)) {
-            fromJSON(zattrs, simplifyVector = FALSE)
-        } else {
-            list()
-        }
-
-        ## Try to load data: Parquet > CSV > reference
-        pq <- list.files(
-            elem_path, "[.]parquet$",
-            full.names = TRUE, recursive = TRUE
-        )
-        csv <- list.files(
-            elem_path, "[.]csv$",
-            full.names = TRUE, recursive = TRUE
-        )
-
-        data <- NULL
-        if (length(pq) > 0L &&
-            requireNamespace("arrow", quietly = TRUE)) {
-            data <- tryCatch(
-                readParquetPoints(elem_path),
-                error = function(e) NULL
-            )
-        }
-        if (is.null(data) && length(csv) > 0L) {
-            data <- tryCatch(
-                readCSVElement(csv[1L]),
-                error = function(e) NULL
-            )
-        }
-
+        meta <- .readZattrs(elem_path)
+        data <- .loadTabularElement(elem_path)
         if (!is.null(data)) {
-            ## Return loaded DataFrame with metadata attr
             attr(data, "spatialdata_metadata") <- meta
             data
         } else {
-            ## Fallback: path reference
-            list(
-                path = elem_path,
-                type = type,
-                name = name,
-                metadata = meta
-            )
+            list(path = elem_path, type = type,
+                name = name, metadata = meta)
         }
     })
     names(elements) <- element_names
     SimpleList(elements)
+}
+
+#' Load tabular data from an element directory
+#' @param elem_path Path to element directory.
+#' @return A \code{DataFrame} or \code{NULL}.
+#' @keywords internal
+.loadTabularElement <- function(elem_path) {
+    pq <- list.files(elem_path, "[.]parquet$",
+        full.names = TRUE, recursive = TRUE)
+    csv <- list.files(elem_path, "[.]csv$",
+        full.names = TRUE, recursive = TRUE)
+
+    data <- NULL
+    if (length(pq) > 0L &&
+        requireNamespace("arrow", quietly = TRUE)) {
+        data <- tryCatch(readParquetPoints(elem_path),
+            error = function(e) NULL)
+    }
+    if (is.null(data) && length(csv) > 0L) {
+        data <- tryCatch(readCSVElement(csv[1L]),
+            error = function(e) NULL)
+    }
+    data
 }
 
 #' Read tables group — attempt SpatialExperiment conversion

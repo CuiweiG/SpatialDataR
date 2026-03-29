@@ -5,7 +5,7 @@
 #' @include AllClasses.R
 #' @include AllGenerics.R
 #' @importFrom S4Vectors DataFrame SimpleList
-#' @importFrom methods setAs is slot
+#' @importFrom methods is slot
 NULL
 
 #' Coerce SpatialData to a summary data.frame

@@ -37,6 +37,34 @@ setMethod("tables", "SpatialData",
 setMethod("coordinateSystems", "SpatialData",
     function(x) slot(x, "coordinate_systems"))
 
+#' Count total elements in a SpatialData object
+#' @param x A \code{SpatialData} object.
+#' @return Integer. Total number of elements across all types.
+#' @rdname SpatialData-class
+#' @export
+#' @examples
+#' sd <- new("SpatialData")
+#' length(sd)
+setMethod("length", "SpatialData", function(x) {
+    length(images(x)) + length(spatialLabels(x)) +
+        length(spatialPoints(x)) + length(shapes(x)) +
+        length(tables(x))
+})
+
+#' List all element names in a SpatialData object
+#' @param x A \code{SpatialData} object.
+#' @return Character vector of element names.
+#' @rdname SpatialData-class
+#' @export
+#' @examples
+#' sd <- new("SpatialData")
+#' names(sd)
+setMethod("names", "SpatialData", function(x) {
+    c(names(images(x)), names(spatialLabels(x)),
+        names(spatialPoints(x)), names(shapes(x)),
+        names(tables(x)))
+})
+
 #' @rdname SpatialData-class
 #' @param object A \code{SpatialData} object.
 #' @export

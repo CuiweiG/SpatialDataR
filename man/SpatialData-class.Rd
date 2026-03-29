@@ -5,15 +5,21 @@
 \alias{SpatialData-class}
 \alias{.SpatialData}
 \alias{[,SpatialData,character-method}
+\alias{length,SpatialData-method}
+\alias{names,SpatialData-method}
 \alias{show,SpatialData-method}
 \title{SpatialData: Container for multi-modal spatial omics data}
 \usage{
 \S4method{[}{SpatialData,character}(x, i, j, ..., drop = FALSE)
 
+\S4method{length}{SpatialData}(x)
+
+\S4method{names}{SpatialData}(x)
+
 \S4method{show}{SpatialData}(object)
 }
 \arguments{
-\item{x}{A \code{\linkS4class{SpatialData}} object.}
+\item{x}{A \code{SpatialData} object.}
 
 \item{i}{Character vector of element names to keep.}
 
@@ -27,6 +33,10 @@
 }
 \value{
 A \code{\linkS4class{SpatialData}} object.
+
+Integer. Total number of elements across all types.
+
+Character vector of element names.
 }
 \description{
 A lightweight R-native representation of a SpatialData Zarr
@@ -71,6 +81,10 @@ store <- system.file("extdata", "xenium_mini.zarr",
 sd <- readSpatialData(store)
 sd_sub <- sd["transcripts"]
 sd_sub
+sd <- new("SpatialData")
+length(sd)
+sd <- new("SpatialData")
+names(sd)
 }
 \references{
 Marconato L et al. (2024). SpatialData: an open and universal
