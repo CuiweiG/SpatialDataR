@@ -83,7 +83,7 @@ aggregatePoints <- function(
         mat <- .normalizeCounts(mat,
             pts_df[[region_col]])
     }
-    result <- DataFrame(mat)
+    result <- DataFrame(as.data.frame(mat))
     result[[region_col]] <- sort(unique(
         regions_df[[region_col]]))
     result
