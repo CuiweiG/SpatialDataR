@@ -40,7 +40,7 @@ aggregation, and multi-sample operations.
 
 <div align="center">
 <img src="man/figures/fig1_store_reading.png"
-    width="480" alt="Store reading"/>
+    width="700" alt="Store reading"/>
 </div>
 
 > Multi-modal spatial map read from a SpatialData Zarr
@@ -81,7 +81,7 @@ read SpatialData-format Zarr stores.
 
 <div align="center">
 <img src="man/figures/fig2_spatial_query.png"
-    width="480" alt="Spatial query"/>
+    width="700" alt="Spatial query"/>
 </div>
 
 > Bounding box query selecting 114/500 transcripts
@@ -113,7 +113,7 @@ stores.
 
 <div align="center">
 <img src="man/figures/fig3_aggregation.png"
-    width="480" alt="Aggregation"/>
+    width="700" alt="Aggregation"/>
 </div>
 
 > Cell × gene expression heatmap (row-normalized
@@ -148,7 +148,7 @@ from SpatialData stores.
 
 <div align="center">
 <img src="man/figures/fig4_transforms.png"
-    width="480" alt="Transforms"/>
+    width="700" alt="Transforms"/>
 </div>
 
 > Five landmark points transformed from pixel

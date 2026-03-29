@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-## SpatialDataR README figures â€” Nature Methods standard
+## SpatialDataR README figures â€?Nature Methods standard
 .libPaths("C:/Users/win10/R/win-library/4.4")
 library(SpatialDataR)
 library(S4Vectors)
@@ -48,7 +48,7 @@ th <- theme_classic(base_size = 8) +
         plot.margin = margin(8, 10, 8, 8))
 
 ## ==========================================================
-## Fig 1: Store Reading â€” show ALL data types clearly
+## Fig 1: Store Reading â€?show ALL data types clearly
 ## ==========================================================
 cat("fig1 ...\n")
 
@@ -103,11 +103,11 @@ fig1 <- ggplot() +
         legend.margin = margin(0, 0, 0, 0))
 
 ggsave(file.path(od, "fig1_store_reading.png"), fig1,
-    width = 120, height = 90, units = "mm",
+    width = 180, height = 130, units = "mm",
     dpi = 300, bg = "white")
 
 ## ==========================================================
-## Fig 2: Bbox query â€” clear before/after
+## Fig 2: Bbox query â€?clear before/after
 ## ==========================================================
 cat("fig2 ...\n")
 
@@ -159,7 +159,7 @@ fig2 <- ggplot() +
             face = "bold"))
 
 ggsave(file.path(od, "fig2_spatial_query.png"), fig2,
-    width = 110, height = 90, units = "mm",
+    width = 170, height = 130, units = "mm",
     dpi = 300, bg = "white")
 
 ## ==========================================================
@@ -236,7 +236,7 @@ fig3 <- ggplot(hm, aes(x = gene, y = cell,
         plot.margin = margin(8, 10, 8, 8))
 
 ggsave(file.path(od, "fig3_aggregation.png"), fig3,
-    width = 110, height = 100, units = "mm",
+    width = 170, height = 140, units = "mm",
     dpi = 300, bg = "white")
 
 ## ==========================================================
@@ -304,7 +304,7 @@ fig4 <- ggplot() +
     th
 
 ggsave(file.path(od, "fig4_transforms.png"), fig4,
-    width = 100, height = 95, units = "mm",
+    width = 160, height = 130, units = "mm",
     dpi = 300, bg = "white")
 
 ## ==========================================================
