@@ -14,10 +14,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest, r: 'devel', bioc: 'devel'}
-          - {os: ubuntu-latest, r: 'release', bioc: 'release'}
-          - {os: macOS-latest, r: 'release', bioc: 'release'}
-          - {os: windows-latest, r: 'release', bioc: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
+          - {os: macOS-latest, r: 'release'}
+          - {os: windows-latest, r: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -32,9 +31,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: |
-            any::rcmdcheck
-            any::BiocManager
+          extra-packages: any::rcmdcheck
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
