@@ -1,0 +1,126 @@
+=======================================================
+SpatialDataR v0.99.0 Full Validation Report
+Date: 2026-03-30 01:26 CST 
+R: R version 4.4.3 (2025-02-28 ucrt) 
+Platform: x86_64-w64-mingw32 
+=======================================================
+
+== 1. STORE VALIDATION ==
+Valid: TRUE 
+Errors: 0 
+Warnings: 0 
+Elements:
+    type            name has_zattrs has_data has_transform
+1 images      morphology       TRUE     TRUE          TRUE
+2 labels     cell_labels       TRUE     TRUE          TRUE
+3 points     transcripts       TRUE     TRUE          TRUE
+4 shapes cell_boundaries       TRUE     TRUE          TRUE
+5 tables           table       TRUE     TRUE         FALSE
+
+== 2. STORE READING ==
+SpatialData object
+  path: C:\Users\win10\R\win-library\4.4\SpatialDataR\extdata\xenium_mini.zarr 
+  images(1): morphology
+  spatialLabels(1): cell_labels
+  spatialPoints(1): transcripts [500 rows]
+  shapes(1): cell_boundaries [50 rows]
+  tables(1): table
+  coordinate_systems:  global, pixels 
+length(): 5 
+names(): morphology, cell_labels, transcripts, cell_boundaries, table 
+
+== 3. ELEMENT SUMMARY ==
+    type            name loaded nrow
+1  image      morphology   TRUE   NA
+2  label     cell_labels   TRUE   NA
+3 points     transcripts   TRUE  500
+4 shapes cell_boundaries   TRUE   50
+5  table           table   TRUE   NA
+
+== 4. POINTS (TRANSCRIPTS) ==
+Class: DFrame 
+Rows: 500  Cols: 4 
+Columns: x, y, gene, cell_id 
+Genes: 10 
+X range: 0.0208 4.2098 
+Y range: 0.0073 4.2456 
+Head:
+DataFrame with 3 rows and 4 columns
+          x         y        gene   cell_id
+  <numeric> <numeric> <character> <integer>
+1  0.864584   1.66186       KRT18         1
+2  1.861827   1.91163        HER2        10
+3  3.531569   3.01793       EPCAM         2
+
+== 5. SHAPES (CELL BOUNDARIES) ==
+Rows: 50 
+Head:
+DataFrame with 3 rows and 4 columns
+    cell_id         x         y    radius
+  <integer> <numeric> <numeric> <numeric>
+1         1   2.95198  2.220744  0.251881
+2         2   0.37184  2.164302  0.287859
+3         3   2.94440  0.787652  0.149332
+
+== 6. TABLES ==
+obs: 50 rows
+var: 10 rows
+Cell types:
+
+Endothelial  Epithelial      Immune     Stromal 
+          7          15          13          15 
+
+== 7. COORDINATE SYSTEMS ==
+Systems: global, pixels 
+
+== 8. TRANSFORMS ==
+CoordinateTransform (2D)
+  type: affine 
+  global -> global
+  affine:
+       [,1]   [,2] [,3]
+[1,] 0.2125 0.0000    0
+[2,] 0.0000 0.2125    0
+[3,] 0.0000 0.0000    1
+Inverse:
+CoordinateTransform (2D)
+  type: affine 
+  global -> global
+  affine:
+         [,1]     [,2] [,3]
+[1,] 4.705882 0.000000    0
+[2,] 0.000000 4.705882    0
+[3,] 0.000000 0.000000    1
+Roundtrip error: 0 
+Composed transform:
+CoordinateTransform (2D)
+  type: affine 
+  pixels -> global
+  affine:
+       [,1]   [,2] [,3]
+[1,] 0.2125 0.0000  100
+[2,] 0.0000 0.2125  200
+[3,] 0.0000 0.0000    1
+
+== 9. BOUNDING BOX QUERY ==
+Full: 500 -> Queried: 131 
+SpatialData query points: 25 
+
+== 10. AGGREGATION ==
+Matrix: 50 x 10 
+First 3 cells:
+  cell_id ACTB CD45 EPCAM
+1       1    4    0     0
+2       2    1    2     2
+3       3    3    1     1
+
+== 11. MULTI-SAMPLE ==
+Combined: 10 elements
+Filtered tumor: 5 elements
+
+== 12. SUBSETTING ==
+sd["transcripts"]: 1 elements
+
+=======================================================
+ALL 25 FUNCTIONS VALIDATED SUCCESSFULLY
+=======================================================
