@@ -28,6 +28,26 @@ R implementation of the SpatialData data model: store
 reading, coordinate transforms, spatial queries, region
 aggregation, and multi-sample operations.
 
+## Validation dataset
+
+All figures below use the **Allen MERFISH VISp**
+dataset (Moffitt et al. 2018 *Science*): 3,714,642
+transcripts across 268 genes in 8 cortical layers
+of mouse primary visual cortex. This dataset was
+chosen because:
+
+1. It is the **canonical benchmark** used by the
+   scverse spatialdata-sandbox for format validation
+2. It contains **multiple spatial element types**
+   (points, regions, annotations) that exercise the
+   full SpatialDataR API
+3. The cortical layer structure provides **ground-truth
+   spatial organization** for validating bounding box
+   queries and region aggregation
+4. It is **publicly available** under CC0 1.0 from the
+   SpaceTx consortium (319 MB; reproducible via
+   `inst/scripts/create_real_store.R`)
+
 ---
 
 ## 1. Native Zarr Store Reading
@@ -52,14 +72,13 @@ aggregation, and multi-sample operations.
 
 ```r
 library(SpatialDataR)
-sd <- readSpatialData("experiment.zarr")
+sd <- readSpatialData("merfish_visp.zarr")
 sd
 #> SpatialData object
-#>   images(1): morphology
-#>   spatialPoints(1): transcripts [500 rows]
-#>   shapes(1): cell_boundaries [50 rows]
+#>   spatialPoints(1): transcripts [3714642 rows]
+#>   shapes(1): cell_boundaries [160 rows]
 #>   tables(1): table
-#>   coordinate_systems: global, pixels
+#>   coordinate_systems: global
 ```
 
 **Comparison:**
@@ -91,10 +110,10 @@ read SpatialData-format Zarr stores.
 > (**b**) Zoomed ROI with gene identity revealed.
 
 ```r
+# 400 x 400 um ROI in mouse cortex
 sub <- bboxQuery(sd,
-    xmin = 1, xmax = 3, ymin = 1, ymax = 3)
-# Also works directly on DataFrames:
-pts_roi <- bboxQuery(pts, 1, 3, 1, 3)
+    xmin = 2000, xmax = 2400,
+    ymin = 5400, ymax = 5800)
 ```
 
 **Comparison:**
@@ -128,7 +147,7 @@ stores.
 counts <- aggregatePoints(
     spatialPoints(sd)[["transcripts"]],
     shapes(sd)[["cell_boundaries"]])
-# Returns 50 x 10 DataFrame (cell × gene)
+# Returns 160 x 268 DataFrame (region × gene)
 ```
 
 **Comparison:**
@@ -159,13 +178,14 @@ from SpatialData stores.
 > actual tissue coordinates from Moffitt et al. 2018.
 
 ```r
+# Compose scale + translation for tissue alignment
 ct <- composeTransforms(
     CoordinateTransform("affine",
-        affine = diag(c(0.2125, 0.2125, 1))),
+        affine = diag(c(0.5, 0.5, 1))),
     CoordinateTransform("affine",
-        affine = matrix(c(1,0,1, 0,1,0.5, 0,0,1),
+        affine = matrix(c(1,0,500, 0,1,2000, 0,0,1),
             3, byrow = TRUE)))
-inv <- invertTransform(ct)  # microns → pixels
+inv <- invertTransform(ct)  # global → pixel
 ```
 
 **Comparison:**
