@@ -72,12 +72,19 @@ inv <- invertTransform(ct)
     width="700" alt="Spatial overview"/>
 </div>
 
-> **Figure 1 | Multi-modal spatial data read from a
+> **Figure 1 | SpatialDataR core operations on a
 > SpatialData Zarr store.** Simulated Xenium-like data
-> distributed with the package (50 cells, 10 genes,
-> 500 transcripts). (**a**) Transcript spatial map.
-> (**b**) Cell type composition.
-> (**c**) Cell boundaries colored by type.
+> (50 cells, 10 genes, 500 transcripts).
+> (**a**) Multi-modal spatial map: transcripts (dots)
+> overlaid on cell boundaries (colored circles) loaded
+> via `readSpatialData()`.
+> (**b**) Bounding box spatial query via `bboxQuery()`:
+> 114/500 transcripts selected within the dashed region.
+> (**c**) Cell × gene count matrix produced by
+> `aggregatePoints()`, grouped by cell type.
+> (**d**) Coordinate transform composition via
+> `composeTransforms()`: pixel grid (gray +) mapped to
+> global coordinates (orange) through scale + translate.
 
 ---
 
