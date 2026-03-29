@@ -97,19 +97,16 @@ aggregatePoints <- function(
 #' @keywords internal
 .buildCountMatrix <- function(features, region_ids,
     valid_regions) {
-    uf <- sort(unique(features))
-    ur <- sort(unique(valid_regions))
-    mat <- matrix(0L, nrow = length(ur),
-        ncol = length(uf))
-    rownames(mat) <- as.character(ur)
-    colnames(mat) <- uf
-    for (i in seq_along(features)) {
-        rid <- as.character(region_ids[i])
-        if (rid %in% rownames(mat)) {
-            mat[rid, features[i]] <-
-                mat[rid, features[i]] + 1L
-        }
-    }
+    ur <- sort(unique(as.character(valid_regions)))
+    ## Filter to valid regions
+    valid_mask <- as.character(region_ids) %in% ur
+    feat_valid <- features[valid_mask]
+    rid_valid <- as.character(region_ids[valid_mask])
+    ## Vectorised tabulation
+    tbl <- table(region = factor(rid_valid, levels = ur),
+        feature = factor(feat_valid))
+    mat <- as.matrix(tbl)
+    storage.mode(mat) <- "integer"
     mat
 }
 

@@ -18,9 +18,4 @@ SpatialData element \code{.zattrs} metadata. Supports
 identity, affine, scale, translation, and sequence types
 from the OME-NGFF specification.
 }
-\examples{
-meta <- list(coordinateTransformations = list(
-    list(type = "scale", scale = c(0.2125, 0.2125))))
-SpatialDataR:::.parseTransform(meta)
-}
 \keyword{internal}

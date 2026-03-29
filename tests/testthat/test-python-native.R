@@ -1,10 +1,12 @@
 ## Tests for Python-native SpatialData stores
-## Requires: C:/Users/win10/merfish_python_native.zarr
+## Set SPATIALDATAR_PYTHON_STORE to the path of a Python-created
+## SpatialData .zarr store to enable these tests.
 ## Created by: inst/scripts/create_python_native_store.py
 
 test_that("read Python-native store (Zarr v3)", {
-    store <- "C:/Users/win10/merfish_python_native.zarr"
-    if (!dir.exists(store)) skip("Python native store not available")
+    store <- Sys.getenv("SPATIALDATAR_PYTHON_STORE", unset = "")
+    if (store == "" || !dir.exists(store))
+        skip("Python native store not available")
 
     sd <- readSpatialData(store)
     expect_s4_class(sd, "SpatialData")
@@ -12,16 +14,16 @@ test_that("read Python-native store (Zarr v3)", {
 })
 
 test_that("validate Python-native store", {
-    store <- "C:/Users/win10/merfish_python_native.zarr"
-    if (!dir.exists(store)) skip("Python native store not available")
+    store <- Sys.getenv("SPATIALDATAR_PYTHON_STORE", unset = "")
+    if (store == "" || !dir.exists(store)) skip("Python native store not available")
 
     v <- validateSpatialData(store)
     expect_true(v$valid)
 })
 
 test_that("read Parquet points from native store", {
-    store <- "C:/Users/win10/merfish_python_native.zarr"
-    if (!dir.exists(store)) skip("Python native store not available")
+    store <- Sys.getenv("SPATIALDATAR_PYTHON_STORE", unset = "")
+    if (store == "" || !dir.exists(store)) skip("Python native store not available")
     skip_if_not_installed("arrow")
 
     sd <- readSpatialData(store)
@@ -32,8 +34,8 @@ test_that("read Parquet points from native store", {
 })
 
 test_that("read GeoParquet shapes from native store", {
-    store <- "C:/Users/win10/merfish_python_native.zarr"
-    if (!dir.exists(store)) skip("Python native store not available")
+    store <- Sys.getenv("SPATIALDATAR_PYTHON_STORE", unset = "")
+    if (store == "" || !dir.exists(store)) skip("Python native store not available")
     skip_if_not_installed("arrow")
 
     sd <- readSpatialData(store)
@@ -43,8 +45,8 @@ test_that("read GeoParquet shapes from native store", {
 })
 
 test_that("bboxQuery on Python-native store", {
-    store <- "C:/Users/win10/merfish_python_native.zarr"
-    if (!dir.exists(store)) skip("Python native store not available")
+    store <- Sys.getenv("SPATIALDATAR_PYTHON_STORE", unset = "")
+    if (store == "" || !dir.exists(store)) skip("Python native store not available")
     skip_if_not_installed("arrow")
 
     sd <- readSpatialData(store)

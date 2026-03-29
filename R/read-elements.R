@@ -4,6 +4,7 @@
 #' @include AllClasses.R
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom jsonlite fromJSON
+#' @importFrom utils read.csv
 NULL
 
 #' Read a Zarr array into memory

@@ -20,7 +20,7 @@ universal Zarr-based format for spatial omics, adopted
 by the scverse ecosystem and supported by 10x Genomics,
 Vizgen, and NanoString platforms. However, R/Bioconductor
 users currently require Python (via reticulate) to access
-these stores â€?creating friction in analysis workflows
+these stores, creating friction in analysis workflows
 that otherwise run entirely in R.
 
 **SpatialDataR** provides a native R interface for
@@ -172,8 +172,8 @@ from SpatialData stores.
     width="700" alt="Transforms"/>
 </div>
 
-> Five landmark coordinates in real MERFISH Âµm space
-> transformed from pixel (gray Ã—) to global (orange â—?
+> Five landmark coordinates in real MERFISH um space
+> transformed from pixel (gray x) to global (orange o)
 > via a composed scale + translation affine. Applied to
 > actual tissue coordinates from Moffitt et al. 2018.
 
@@ -185,17 +185,16 @@ ct <- composeTransforms(
     CoordinateTransform("affine",
         affine = matrix(c(1,0,500, 0,1,2000, 0,0,1),
             3, byrow = TRUE)))
-inv <- invertTransform(ct)  # global â†?pixel
+inv <- invertTransform(ct)  # global -> pixel
 ```
 
-See also:
-See also: Python spatialdata for OME-NGFF transforms.
-coordinate transforms. Users currently construct ad hoc
-affine matrices manually.
+See also: No existing R/Bioconductor package provides
+OME-NGFF coordinate transform parsing or composition.
+Users currently construct ad hoc affine matrices manually.
 
 ---
 
-## 5. Roundtrip: Read â†?Query â†?Write â†?Verify
+## 5. Roundtrip: Read -> Query -> Write -> Verify
 
 > `writeSpatialData()` produces SpatialData-formatted
 > Zarr stores readable by Python spatialdata, enabling
@@ -207,8 +206,9 @@ affine matrices manually.
 </div>
 
 > Full roundtrip on real MERFISH data: (**a**) Read
-> 3.7M transcripts â†?(**b**) spatial query selects
-> 649K in 600Ã—600 Âµm ROI â†?write to new .zarr â†?> (**c**) read back and verify identical count.
+> 3.7M transcripts, (**b**) spatial query selects
+> 649K in 600x600 um ROI, write to new .zarr,
+> (**c**) read back and verify identical count.
 
 ```r
 sub <- bboxQuery(sd,
@@ -219,10 +219,10 @@ sd2 <- readSpatialData("subset.zarr")
 # 648,954 transcripts preserved
 ```
 
-See also:
-See also: Python spatialdata for write support.
-stores. Users must export to CSV and convert in
-Python â€?`writeSpatialData()` eliminates this step.
+See also: No existing R/Bioconductor package can write
+SpatialData-formatted Zarr stores. Users must export
+to CSV and convert in Python.
+`writeSpatialData()` eliminates this step.
 
 ---
 

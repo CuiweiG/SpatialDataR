@@ -202,10 +202,6 @@ setMethod("transformCoords",
 #' @return A \code{\link{CoordinateTransform}} or \code{NULL}.
 #'
 #' @keywords internal
-#' @examples
-#' meta <- list(coordinateTransformations = list(
-#'     list(type = "scale", scale = c(0.2125, 0.2125))))
-#' SpatialDataR:::.parseTransform(meta)
 .parseTransform <- function(metadata) {
     transforms <- metadata[["coordinateTransformations"]]
     if (is.null(transforms) || length(transforms) == 0L) {

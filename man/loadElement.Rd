@@ -27,6 +27,7 @@ element from a \code{SpatialData} object as a
 store <- system.file("extdata", "xenium_mini.zarr",
     package = "SpatialDataR")
 sd <- readSpatialData(store)
-# Load morphology image (if Rarr available):
-# img <- loadElement(sd, "morphology")
+\donttest{
+img <- loadElement(sd, "morphology")
+}
 }

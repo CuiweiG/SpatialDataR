@@ -30,6 +30,7 @@ store <- system.file("extdata", "xenium_mini.zarr",
     package = "SpatialDataR")
 img_path <- file.path(store, "images",
     "morphology", "scale0")
-# Returns DelayedArray if Rarr available
-# arr <- readZarrDelayed(img_path)
+\donttest{
+arr <- readZarrDelayed(img_path)
+}
 }

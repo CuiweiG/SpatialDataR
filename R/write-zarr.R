@@ -6,6 +6,7 @@
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom jsonlite toJSON fromJSON
 #' @importFrom methods slot is
+#' @importFrom utils write.csv
 NULL
 
 #' Write a SpatialData object to Zarr format

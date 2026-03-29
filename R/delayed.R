@@ -28,8 +28,9 @@ NULL
 #'     package = "SpatialDataR")
 #' img_path <- file.path(store, "images",
 #'     "morphology", "scale0")
-#' # Returns DelayedArray if Rarr available
-#' # arr <- readZarrDelayed(img_path)
+#' \donttest{
+#' arr <- readZarrDelayed(img_path)
+#' }
 readZarrDelayed <- function(zarr_path) {
     zarr_path <- normalizePath(zarr_path,
         mustWork = TRUE)
@@ -75,8 +76,9 @@ readZarrDelayed <- function(zarr_path) {
 #' store <- system.file("extdata", "xenium_mini.zarr",
 #'     package = "SpatialDataR")
 #' sd <- readSpatialData(store)
-#' # Load morphology image (if Rarr available):
-#' # img <- loadElement(sd, "morphology")
+#' \donttest{
+#' img <- loadElement(sd, "morphology")
+#' }
 loadElement <- function(sd, element_name,
     scale = "scale0") {
     ## Check images
