@@ -54,6 +54,7 @@ Collate:
     'SpatialDataR-package.R'
     'aggregate.R'
     'coerce.R'
+    'delayed.R'
     'methods.R'
     'multisample.R'
     'read-elements.R'
@@ -61,3 +62,4 @@ Collate:
     'spatial-query.R'
     'transforms.R'
     'validate.R'
+    'write-zarr.R'

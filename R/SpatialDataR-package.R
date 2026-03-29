@@ -39,6 +39,9 @@
 #'   \item{Aggregation}{\code{\link{aggregatePoints}}}
 #'   \item{Multi-sample}{\code{\link{combineSpatialData}},
 #'     \code{\link{filterSample}}}
+#'   \item{Writing}{\code{\link{writeSpatialData}}}
+#'   \item{Lazy access}{\code{\link{readZarrDelayed}},
+#'     \code{\link{loadElement}}}
 #'   \item{Validation}{\code{\link{validateSpatialData}}}
 #'   \item{Interoperability}{\code{\link{elementSummary}},
 #'     \code{\link{coordinateSystemElements}}}

@@ -195,6 +195,40 @@ affine matrices manually.
 
 ---
 
+## 5. Roundtrip: Read → Query → Write → Verify
+
+> **First R package with SpatialData write support.**
+> `writeSpatialData()` produces spec-compliant Zarr
+> stores that can be read by Python spatialdata. This
+> enables a pure-R analysis branch within a mixed
+> Python/R pipeline.
+
+<div align="center">
+<img src="man/figures/fig5_roundtrip.png"
+    width="700" alt="Roundtrip"/>
+</div>
+
+> Full roundtrip on real MERFISH data: (**a**) Read
+> 3.7M transcripts → (**b**) spatial query selects
+> 649K in 600×600 µm ROI → write to new .zarr →
+> (**c**) read back and verify identical count.
+
+```r
+sub <- bboxQuery(sd,
+    xmin = 2039, xmax = 2639,
+    ymin = 5391, ymax = 5991)
+writeSpatialData(sub, "subset.zarr")
+sd2 <- readSpatialData("subset.zarr")
+# 648,954 transcripts preserved
+```
+
+**Comparison:**
+No existing R package can write SpatialData Zarr
+stores. Users must export to CSV and convert in
+Python — `writeSpatialData()` eliminates this step.
+
+---
+
 ## Additional Features
 
 | Function | Description |
