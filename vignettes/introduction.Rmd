@@ -27,15 +27,14 @@ et al. 2023 *Histochem Cell Biol*).
 
 ## Design principles
 
-- **No Python required**: reads `.zarr` stores using R packages
-  (`Rarr`, `pizzarr`, `arrow`, `jsonlite`)
-- **SpatialData-aware**: parses `.zattrs` metadata, discovers
-  elements, handles coordinate systems and transforms
-- **Bioconductor-native**: returns `DataFrame`, `SimpleList`,
-  and `SpatialExperiment` objects
-- **OME-NGFF compliant**: supports the full coordinate
-  transformation vocabulary (identity, scale, translation,
-  affine, sequence)
+- **No Python required**: reads `.zarr` stores using
+    R packages (`Rarr`, `pizzarr`, `arrow`, `jsonlite`)
+- **SpatialData-aware**: parses `.zattrs` metadata,
+    discovers elements, handles coordinate systems
+- **Bioconductor-native**: returns `DataFrame`,
+    `SimpleList`, and `SpatialExperiment` objects
+- **OME-NGFF compliant**: supports identity, scale,
+    translation, affine, and sequence transforms
 
 ## Comparison with alternatives
 
@@ -216,15 +215,18 @@ sessionInfo()
 
 # References
 
-- Marconato L et al. (2024). SpatialData: an open and universal
-  data framework for spatial omics. *Nat Methods* 21:2196-2209.
-  doi:10.1038/s41592-024-02212-x
+- Marconato L et al. (2024). SpatialData: an open
+    and universal data framework for spatial omics.
+    *Nat Methods* 21:2196-2209.
+    doi:10.1038/s41592-024-02212-x
 
-- Moore J et al. (2023). OME-Zarr: a cloud-optimized bioimaging
-  file format with international community support. *Histochem
-  Cell Biol* 160:223-251. doi:10.1007/s00418-023-02209-1
+- Moore J et al. (2023). OME-Zarr: a cloud-optimized
+    bioimaging file format with international community
+    support. *Histochem Cell Biol* 160:223-251.
+    doi:10.1007/s00418-023-02209-1
 
-- Righelli D et al. (2022). SpatialExperiment: infrastructure
-  for spatially-resolved transcriptomics data in R using
-  Bioconductor. *Bioinformatics* 38:3128-3131.
-  doi:10.1093/bioinformatics/btac299
+- Righelli D et al. (2022). SpatialExperiment:
+    infrastructure for spatially-resolved
+    transcriptomics data in R using Bioconductor.
+    *Bioinformatics* 38:3128-3131.
+    doi:10.1093/bioinformatics/btac299

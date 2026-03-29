@@ -27,3 +27,10 @@ Transforms coordinates using an affine matrix. Supported inputs
 include \code{DataFrame} (with \code{x} and \code{y} columns)
 and plain numeric matrices (Nx2 for 2D, Nx3 for 3D).
 }
+\examples{
+library(S4Vectors)
+pts <- DataFrame(x = c(100, 200), y = c(50, 150))
+ct <- CoordinateTransform("affine",
+    affine = diag(c(0.5, 0.5, 1)))
+transformCoords(pts, ct)
+}

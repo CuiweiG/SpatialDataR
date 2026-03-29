@@ -81,5 +81,11 @@ setGeneric("coordinateSystems", function(x)
 #' @return Transformed data (same class as input).
 #' @export
 #' @rdname transformCoords
+#' @examples
+#' library(S4Vectors)
+#' pts <- DataFrame(x = c(100, 200), y = c(50, 150))
+#' ct <- CoordinateTransform("affine",
+#'     affine = diag(c(0.5, 0.5, 1)))
+#' transformCoords(pts, ct)
 setGeneric("transformCoords", function(x, transform, ...)
     standardGeneric("transformCoords"))
