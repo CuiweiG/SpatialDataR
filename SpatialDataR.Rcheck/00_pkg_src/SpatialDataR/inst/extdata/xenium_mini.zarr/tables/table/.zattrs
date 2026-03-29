@@ -1,0 +1,9 @@
+{
+  "encoding-type": "anndata",
+  "encoding-version": "0.1.0",
+  "spatialdata_attrs": {
+    "region": "cell_labels",
+    "region_key": "region",
+    "instance_key": "cell_id"
+  }
+}

@@ -14,33 +14,25 @@
 
 ## The problem
 
-[SpatialData](https://spatialdata.scverse.org/) (Marconato et al.
-2024 *Nat Methods*) defines a universal Zarr-based format for
-spatial omics, building on the OME-NGFF specification (Moore et al.
-2023). R-side support has remained limited, with no mature native
-Bioconductor-oriented reader providing direct, zero-Python access
-to SpatialData stores.
+[SpatialData](https://spatialdata.scverse.org/)
+(Marconato et al. 2024 *Nat Methods*) defines a
+universal Zarr-based format for spatial omics, building
+on the OME-NGFF specification (Moore et al. 2023).
+R/Bioconductor users currently need Python bridges
+(reticulate) to access SpatialData stores — there is no
+native R reader that understands the full SpatialData
+data model (elements, coordinate systems, transforms,
+spatial queries).
 
 ## What SpatialDataR provides
 
-`SpatialDataR` reads SpatialData `.zarr` stores directly in R:
-
-- **Store discovery**: `readSpatialData()` parses `.zattrs`
-  metadata and discovers all element types
-- **Element readers**: `readZarrArray()` (Rarr/pizzarr),
-  `readParquetPoints()` (arrow), `readCSVElement()`,
-  `readSpatialTable()` (AnnData → SpatialExperiment)
-- **Coordinate transforms**: full OME-NGFF support — identity,
-  scale, translation, affine, sequence, with `composeTransforms()`
-  and `invertTransform()`; 2D and 3D
-- **Spatial queries**: `bboxQuery()` for bounding box subsetting
-  (mirrors Python `spatialdata.bounding_box_query()`)
-- **Interoperability**: `elementSummary()`,
-  `coordinateSystemElements()`, `[` subsetting, SpatialExperiment
-  coercion
+A complete R-native reimplementation of the core
+SpatialData operations:
 
 ```r
 library(SpatialDataR)
+
+# Read a SpatialData Zarr store
 sd <- readSpatialData("xenium_breast.zarr")
 sd
 #> SpatialData object
@@ -52,10 +44,23 @@ sd
 #>   tables(1): table
 #>   coordinate_systems: global, pixels
 
-# Spatial query
-sub <- bboxQuery(sd, xmin = 0, xmax = 100, ymin = 0, ymax = 100)
+# Validate spec compliance
+validateSpatialData("xenium_breast.zarr")
 
-# Transform coordinates
+# Spatial query (mirrors Python bounding_box_query)
+sub <- bboxQuery(sd, xmin = 0, xmax = 100,
+    ymin = 0, ymax = 100)
+
+# Region aggregation (molecules -> cell-gene matrix)
+counts <- aggregatePoints(
+    spatialPoints(sd)[["transcripts"]],
+    shapes(sd)[["cell_boundaries"]])
+
+# Multi-sample analysis
+combined <- combineSpatialData(sd1, sd2,
+    sample_ids = c("tumor", "normal"))
+
+# Transform composition + inversion
 ct <- elementTransform(images(sd)[["morphology"]])
 inv <- invertTransform(ct)
 ```
@@ -63,66 +68,90 @@ inv <- invertTransform(ct)
 ---
 
 <div align="center">
-<img src="man/figures/fig1_spatial_overview.png" width="700"
-  alt="Spatial overview"/>
+<img src="man/figures/fig1_spatial_overview.png"
+    width="700" alt="Spatial overview"/>
 </div>
 
 > **Figure 1 | Multi-modal spatial data read from a
-> SpatialData-spec Zarr store.** Demo data distributed with
-> the package (50 cells, 10 genes, 500 transcripts).
-> (**a**) Transcript spatial map. (**b**) Cell type
-> composition. (**c**) Cell boundaries colored by type.
+> SpatialData Zarr store.** Simulated Xenium-like data
+> distributed with the package (50 cells, 10 genes,
+> 500 transcripts). (**a**) Transcript spatial map.
+> (**b**) Cell type composition.
+> (**c**) Cell boundaries colored by type.
 
 ---
 
 ## Functions
 
-### Store-level
+### Store I/O
 
 | Function | Description |
 |----------|-------------|
-| `readSpatialData()` | Discover and read all elements from a .zarr store |
-| `images()` | Access image element references |
-| `spatialLabels()` | Access segmentation label references |
-| `spatialPoints()` | Access point DataFrames |
-| `shapes()` | Access shape DataFrames |
-| `tables()` | Access annotation tables |
-| `coordinateSystems()` | Access coordinate system metadata |
-| `elementSummary()` | Tabulate all elements with metadata |
-| `coordinateSystemElements()` | Map coordinate systems → elements |
-| `[` | Subset by element name |
+| `readSpatialData()` | Read all elements from .zarr |
+| `validateSpatialData()` | Spec compliance checker |
+| `readZarrArray()` | Read Zarr array (Rarr/pizzarr) |
+| `readParquetPoints()` | Read Parquet points (arrow) |
+| `readCSVElement()` | Read CSV points/shapes |
+| `readSpatialTable()` | AnnData table → SE |
 
-### Element-level readers
+### Accessors
 
 | Function | Description |
 |----------|-------------|
-| `readZarrArray()` | Read a Zarr array via Rarr/pizzarr backend |
-| `readParquetPoints()` | Read Parquet-backed transcript coordinates |
-| `readCSVElement()` | Read CSV-backed points or shapes |
-| `readSpatialTable()` | Read AnnData-format table (obs/var/X) |
+| `images()` / `spatialLabels()` | Raster refs |
+| `spatialPoints()` / `shapes()` | Vector data |
+| `tables()` | Annotation tables |
+| `coordinateSystems()` | CS metadata |
+| `elementSummary()` | Element overview |
+| `names()` / `length()` / `[` | R idioms |
 
-### Coordinate transforms
-
-| Function | Description |
-|----------|-------------|
-| `CoordinateTransform()` | Construct affine/identity transform (2D/3D) |
-| `transformCoords()` | Apply transform (DataFrame or matrix) |
-| `composeTransforms()` | Chain two transforms |
-| `invertTransform()` | Compute inverse transform |
-| `elementTransform()` | Extract transform from element metadata |
-
-### Spatial queries
+### Coordinate transforms (OME-NGFF)
 
 | Function | Description |
 |----------|-------------|
-| `bboxQuery()` | Bounding box spatial query |
+| `CoordinateTransform()` | 2D/3D affine |
+| `transformCoords()` | DataFrame / matrix |
+| `composeTransforms()` | Chain A → B → C |
+| `invertTransform()` | Compute inverse |
+| `elementTransform()` | Extract from metadata |
+
+### Spatial operations
+
+| Function | Description |
+|----------|-------------|
+| `bboxQuery()` | Bounding box subset |
+| `aggregatePoints()` | Region aggregation |
+| `combineSpatialData()` | Multi-sample merge |
+| `filterSample()` | Extract one sample |
+
+---
+
+## Validation
+
+The package ships with a structurally complete mini
+Zarr store (`xenium_mini.zarr`) and validation scripts:
+
+```r
+# Quick validation
+result <- validateSpatialData(
+    system.file("extdata", "xenium_mini.zarr",
+        package = "SpatialDataR"))
+result$valid
+#> [1] TRUE
+```
+
+For validation against real public datasets (MERFISH,
+Xenium, Visium HD), see
+`inst/scripts/validate_real_data.R`. Datasets are
+downloaded from the official
+[scverse SpatialData repository](https://spatialdata.scverse.org/en/stable/tutorials/notebooks/datasets/README.html)
+(CC BY 4.0 / CC0 1.0).
 
 ---
 
 ## Installation
 
 ```r
-# Development version:
 if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
 remotes::install_github("CuiweiG/SpatialDataR")
@@ -130,12 +159,18 @@ remotes::install_github("CuiweiG/SpatialDataR")
 
 ## References
 
-- Marconato L et al. (2024). SpatialData: an open and universal
-  data framework for spatial omics. *Nat Methods* 21:2196.
+- Marconato L et al. (2024). SpatialData: an open and
+  universal data framework for spatial omics.
+  *Nat Methods* 21:2196.
   doi:10.1038/s41592-024-02212-x
-- Moore J et al. (2023). OME-Zarr: a cloud-optimized bioimaging
-  file format. *Histochem Cell Biol* 160:223.
+- Moore J et al. (2023). OME-Zarr: a cloud-optimized
+  bioimaging file format. *Histochem Cell Biol* 160:223.
   doi:10.1007/s00418-023-02209-1
-- Righelli D et al. (2022). SpatialExperiment: infrastructure for
-  spatially-resolved transcriptomics data in R. *Bioinformatics*
-  38:3128. doi:10.1093/bioinformatics/btac299
+- Righelli D et al. (2022). SpatialExperiment:
+  infrastructure for spatially-resolved transcriptomics.
+  *Bioinformatics* 38:3128.
+  doi:10.1093/bioinformatics/btac299
+- Moses L & Bhatt P (2023). Voyager: exploratory
+  single-cell genomics data analysis with geospatial
+  statistics. *Nat Methods* 20:1431.
+  doi:10.1038/s41592-023-01920-2

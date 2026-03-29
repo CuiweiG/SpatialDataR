@@ -1,0 +1,27 @@
+CoordinateTransform     Create a CoordinateTransform
+CoordinateTransform-class
+                        CoordinateTransform: Spatial coordinate
+                        transformation
+SpatialData-class       SpatialData: Container for multi-modal spatial
+                        omics data
+SpatialDataR-package    SpatialDataR: Native R Interface to the
+                        SpatialData Zarr Format
+aggregatePoints         Aggregate point features by region
+bboxQuery               Bounding box spatial query
+combineSpatialData      Combine multiple SpatialData objects
+composeTransforms       Compose two coordinate transforms
+coordinateSystemElements
+                        List coordinate systems with their elements
+elementSummary          Coerce SpatialData to a summary data.frame
+elementTransform        Extract element transform from metadata
+filterSample            Filter SpatialData by sample
+images                  Access images from a SpatialData object
+invertTransform         Invert a coordinate transform
+readCSVElement          Read CSV-backed point or shape data
+readParquetPoints       Read a Parquet-backed point table
+readSpatialData         Read a SpatialData Zarr store into R
+readSpatialTable        Convert a SpatialData table to
+                        SpatialExperiment
+readZarrArray           Read a Zarr array into memory
+transformCoords         Apply coordinate transformation
+validateSpatialData     Validate a SpatialData Zarr store
