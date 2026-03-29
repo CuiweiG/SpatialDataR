@@ -7,7 +7,8 @@
 readParquetPoints(parquet_path)
 }
 \arguments{
-\item{parquet_path}{Path to a \code{.parquet} file or directory.}
+\item{parquet_path}{Path to a \code{.parquet} file or a
+directory containing \code{.parquet} files.}
 }
 \value{
 A \code{DataFrame} with x, y coordinates and metadata.
@@ -15,4 +16,15 @@ A \code{DataFrame} with x, y coordinates and metadata.
 \description{
 Reads spatial points stored as Parquet files (used by
 SpatialData for transcript coordinates).
+}
+\examples{
+## Parquet reading requires the arrow package
+## readParquetPoints("path/to/transcripts/")
+## Create a small mock example instead
+df <- S4Vectors::DataFrame(
+    x = c(1.5, 2.3, 4.1),
+    y = c(0.8, 3.2, 1.7),
+    gene = c("EPCAM", "VIM", "KRT18")
+)
+df
 }

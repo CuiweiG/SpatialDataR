@@ -10,10 +10,18 @@ readSpatialTable(table_path)
 \item{table_path}{Path to a table Zarr group (AnnData format).}
 }
 \value{
-A \code{SpatialExperiment} object, or \code{NULL} if
-  conversion fails.
+A \code{SpatialExperiment} object, or a list with
+  \code{obs} and \code{var} DataFrames if expression data is
+  unavailable.
 }
 \description{
-Reads an AnnData-formatted table from a Zarr store and
-converts to a \code{SpatialExperiment} object.
+Reads an AnnData-formatted table from a SpatialData Zarr store
+and converts to a \code{SpatialExperiment} object. Supports
+both Zarr-array and CSV-backed obs/var/X storage.
+}
+\examples{
+store <- system.file("extdata", "xenium_mini.zarr",
+    package = "SpatialDataR")
+tbl <- readSpatialTable(file.path(store, "tables", "table"))
+tbl
 }

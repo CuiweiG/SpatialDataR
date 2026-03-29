@@ -9,15 +9,22 @@ NULL
 #'
 #' A lightweight R-native representation of a SpatialData Zarr
 #' store. Holds references to images, labels, points, shapes,
-#' and annotation tables without loading full data into memory.
+#' and annotation tables. Element data is loaded on explicit
+#' request via element-level reader functions.
 #'
-#' @slot images \code{SimpleList} of image references.
-#' @slot labels \code{SimpleList} of label/segmentation references.
-#' @slot points \code{SimpleList} of point DataFrames.
-#' @slot shapes \code{SimpleList} of shape DataFrames.
-#' @slot tables \code{SimpleList} of annotation tables.
-#' @slot coordinate_systems \code{list} of coordinate systems.
-#' @slot metadata \code{list} of additional metadata.
+#' @slot images \code{SimpleList} of image element descriptors.
+#'   Each entry is a list with \code{path}, \code{type},
+#'   \code{name}, and \code{metadata}.
+#' @slot labels \code{SimpleList} of label/segmentation descriptors.
+#' @slot points \code{SimpleList} of point element descriptors or
+#'   \code{DataFrame} objects (when loaded via CSV/Parquet).
+#' @slot shapes \code{SimpleList} of shape descriptors or
+#'   \code{DataFrame} objects (when loaded via CSV/Parquet).
+#' @slot tables \code{SimpleList} of annotation table descriptors
+#'   or \code{SpatialExperiment} objects (when successfully loaded).
+#' @slot coordinate_systems \code{list} of coordinate system
+#'   definitions parsed from the top-level \code{.zattrs}.
+#' @slot metadata \code{list} of additional Zarr store metadata.
 #' @slot path Character. Path to the source Zarr store.
 #'
 #' @references
@@ -52,6 +59,24 @@ NULL
     )
 )
 
+setValidity("SpatialData", function(object) {
+    msg <- character()
+
+    ## path must be length 1
+    if (length(slot(object, "path")) != 1L) {
+        msg <- c(msg, "'path' must be a single character string")
+    }
+
+    ## coordinate_systems must be a named list (or empty)
+    cs <- slot(object, "coordinate_systems")
+    if (length(cs) > 0L && is.null(names(cs))) {
+        msg <- c(msg,
+            "'coordinate_systems' must be a named list")
+    }
+
+    if (length(msg) > 0L) msg else TRUE
+})
+
 #' CoordinateTransform: Spatial coordinate transformation
 #'
 #' Represents an affine transformation between coordinate systems.
@@ -85,3 +110,20 @@ NULL
         output_cs = "global"
     )
 )
+
+setValidity("CoordinateTransform", function(object) {
+    msg <- character()
+
+    tp <- slot(object, "type")
+    if (!tp %in% c("identity", "affine")) {
+        msg <- c(msg,
+            "'type' must be 'identity' or 'affine'")
+    }
+
+    aff <- slot(object, "affine")
+    if (!is.numeric(aff) || nrow(aff) != ncol(aff)) {
+        msg <- c(msg, "'affine' must be a square numeric matrix")
+    }
+
+    if (length(msg) > 0L) msg else TRUE
+})

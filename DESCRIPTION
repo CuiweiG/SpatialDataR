@@ -3,28 +3,30 @@ Title: Native R Interface to the SpatialData Zarr Format for Spatial
     Omics
 Version: 0.99.0
 Authors@R:
-    person("CuiweiG", email = "48gaocuiwei@gmail.com",
-    role = c("aut", "cre"))
+    person("Cuiwei", "Gao", email = "48gaocuiwei@gmail.com",
+    role = c("aut", "cre"),
+    comment = c(ORCID = "0000-0000-0000-0000"))
 Description: Provides native R infrastructure for inspecting and
     reading SpatialData-formatted Zarr stores without Python
-    dependencies. Discovers and lazily references images, labels,
-    points, shapes, and annotation tables. Includes element-level
-    readers for Zarr arrays (via Rarr/pizzarr), Parquet point
-    tables (via arrow), and coordinate system transformations.
-    Designed as a lightweight bridge between the Python SpatialData
-    ecosystem and R/Bioconductor spatial analysis workflows.
+    dependencies. Discovers and references images, labels,
+    points, shapes, and annotation tables stored in '.zarr'
+    directories. Includes element-level readers for Zarr arrays
+    (via 'Rarr' or 'pizzarr'), CSV and Parquet point tables
+    (via 'arrow'), and coordinate system transformations.
+    Designed as a lightweight bridge between the Python
+    'SpatialData' ecosystem and R/Bioconductor spatial analysis
+    workflows.
 License: Artistic-2.0
 Depends: R (>= 4.4.0)
 Imports:
     methods,
-    BiocGenerics,
     S4Vectors (>= 0.32.0),
+    jsonlite
+Suggests:
+    BiocGenerics,
     SummarizedExperiment,
     SpatialExperiment,
     SingleCellExperiment,
-    jsonlite,
-    utils
-Suggests:
     DelayedArray,
     pizzarr,
     Rarr,
@@ -52,4 +54,3 @@ Collate:
     'read-elements.R'
     'read-zarr.R'
     'transforms.R'
-    'zzz.R'

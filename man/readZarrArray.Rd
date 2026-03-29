@@ -2,21 +2,29 @@
 % Please edit documentation in R/read-elements.R
 \name{readZarrArray}
 \alias{readZarrArray}
-\title{Read a Zarr array lazily}
+\title{Read a Zarr array into memory}
 \usage{
 readZarrArray(zarr_path)
 }
 \arguments{
-\item{zarr_path}{Path to a Zarr array directory.}
+\item{zarr_path}{Path to a Zarr array directory (containing
+\code{.zarray} metadata and chunk files).}
 }
 \value{
-A \code{DelayedArray} or numeric matrix.
+A numeric matrix or array.
 }
 \description{
-Reads a Zarr array as a \code{DelayedArray} for out-of-memory
-access. Uses \pkg{Rarr} or \pkg{pizzarr} as backend.
+Reads a Zarr array using \pkg{Rarr} or \pkg{pizzarr} as backend.
+The full array is loaded into memory as a numeric matrix or
+array.
 }
 \examples{
-# Requires a Zarr array on disk
-# readZarrArray("path/to/images/morphology/scale0")
+store <- system.file("extdata", "xenium_mini.zarr",
+    package = "SpatialDataR")
+img_path <- file.path(store, "images", "morphology", "scale0")
+if (requireNamespace("Rarr", quietly = TRUE) ||
+    requireNamespace("pizzarr", quietly = TRUE)) {
+    arr <- readZarrArray(img_path)
+    dim(arr)
+}
 }

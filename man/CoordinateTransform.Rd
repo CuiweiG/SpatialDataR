@@ -33,7 +33,8 @@ ct <- CoordinateTransform("identity")
 
 # Scale + translate
 mat <- matrix(c(0.5, 0, 10, 0, 0.5, 20, 0, 0, 1),
-              nrow = 3, byrow = TRUE)
+    nrow = 3, byrow = TRUE)
 ct <- CoordinateTransform("affine", affine = mat,
     input_cs = "pixels", output_cs = "microns")
+ct
 }

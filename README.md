@@ -27,20 +27,25 @@ access to SpatialData stores.
 - **Store discovery**: `readSpatialData()` parses `.zattrs`
   metadata and discovers images, labels, points, shapes, tables
 - **Element readers**: `readZarrArray()` (via Rarr/pizzarr),
-  `readParquetPoints()` (via arrow), `readSpatialTable()`
+  `readParquetPoints()` (via arrow), `readCSVElement()`,
+  `readSpatialTable()`
 - **Coordinate transforms**: `CoordinateTransform` class with
-  affine transformation support
-- **Lazy references**: elements are discovered but not loaded
-  into memory until explicitly accessed
+  affine transformation support for `DataFrame` and `matrix`
+- **Eager loading**: points and shapes stored as CSV/Parquet are
+  loaded as `DataFrame` objects on store read; images and labels
+  are stored as path references for on-demand loading via
+  `readZarrArray()`
 
 ```r
 library(SpatialDataR)
 sd <- readSpatialData("xenium_breast.zarr")
 sd
 #> SpatialData object
+#>   path: /data/xenium_breast.zarr
 #>   images(1): morphology
 #>   spatialLabels(1): cell_labels
-#>   points(1): transcripts
+#>   spatialPoints(1): transcripts
+#>   shapes(1): cell_boundaries
 #>   tables(1): table
 #>   coordinate_systems: global, pixels
 ```
@@ -48,7 +53,8 @@ sd
 ---
 
 <div align="center">
-<img src="man/figures/fig1_spatial_overview.png" width="700" alt="Spatial overview"/>
+<img src="man/figures/fig1_spatial_overview.png" width="700"
+  alt="Spatial overview"/>
 </div>
 
 > **Figure 1 | Multi-modal spatial data read from a
@@ -65,12 +71,12 @@ sd
 
 | Function | Description |
 |----------|-------------|
-| `readSpatialData()` | Discover and lazily reference all elements in a .zarr store |
+| `readSpatialData()` | Discover and read all elements from a .zarr store |
 | `images()` | Access image element references |
 | `spatialLabels()` | Access segmentation label references |
-| `spatialPoints()` | Access point coordinate references |
-| `shapes()` | Access shape geometry references |
-| `tables()` | Access annotation table references |
+| `spatialPoints()` | Access point DataFrames |
+| `shapes()` | Access shape DataFrames |
+| `tables()` | Access annotation tables |
 | `coordinateSystems()` | Access coordinate system metadata |
 
 ### Element-level readers
@@ -79,14 +85,15 @@ sd
 |----------|-------------|
 | `readZarrArray()` | Read a Zarr array via Rarr/pizzarr backend |
 | `readParquetPoints()` | Read Parquet-backed transcript coordinates |
-| `readSpatialTable()` | Convert AnnData Zarr table to SpatialExperiment |
+| `readCSVElement()` | Read CSV-backed points or shapes |
+| `readSpatialTable()` | Read AnnData-format table (obs/var/X) |
 
 ### Coordinate transforms
 
 | Function | Description |
 |----------|-------------|
 | `CoordinateTransform()` | Construct affine/identity transformation |
-| `transformCoords()` | Apply transformation to point coordinates |
+| `transformCoords()` | Apply transformation (DataFrame or matrix) |
 
 ---
 

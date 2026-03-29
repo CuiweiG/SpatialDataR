@@ -1,6 +1,7 @@
-^\.gitignore$
 ^\.github$
-^README\.Rmd$
-^doc$
-^Meta$
-^\.DS_Store$
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^SpatialDataR\.Rcheck$
+^SpatialDataR\.BiocCheck$
+^SpatialDataR_.*\.tar\.gz$

@@ -17,19 +17,20 @@ established a universal data framework for spatial omics. However,
 R/Bioconductor users currently need Python bridges (reticulate)
 to access SpatialData stores. This package provides direct Zarr
 reading, eliminating the Python dependency and enabling native
-integration with \code{SpatialExperiment}, \code{DelayedArray},
-and the Bioconductor ecosystem.
+integration with \code{SpatialExperiment} and the Bioconductor
+ecosystem.
 }
 
 \section{Key functions}{
 
 \describe{
-  \item{Reading}{\code{\link{readSpatialData}},
-    \code{\link{readZarrArray}},
+  \item{Store-level}{\code{\link{readSpatialData}}}
+  \item{Element readers}{\code{\link{readZarrArray}},
     \code{\link{readParquetPoints}},
+    \code{\link{readCSVElement}},
     \code{\link{readSpatialTable}}}
   \item{Accessors}{\code{\link{images}},
-    \code{\link{labels}},
+    \code{\link{spatialLabels}},
     \code{\link{spatialPoints}},
     \code{\link{shapes}},
     \code{\link{tables}},
@@ -40,17 +41,14 @@ and the Bioconductor ecosystem.
 }
 
 \examples{
-# Create mock SpatialData store
-tmp <- tempfile()
-dir.create(file.path(tmp, "images", "he_image"), recursive = TRUE)
-dir.create(file.path(tmp, "points", "transcripts"), recursive = TRUE)
-writeLines('{"spatialdata_attrs": {"version": "0.1"}}',
-    file.path(tmp, ".zattrs"))
-writeLines('{}', file.path(tmp, "images", "he_image", ".zattrs"))
-writeLines('{}', file.path(tmp, "points", "transcripts", ".zattrs"))
-sd <- readSpatialData(tmp)
+store <- system.file("extdata", "xenium_mini.zarr",
+    package = "SpatialDataR")
+sd <- readSpatialData(store)
 sd
-unlink(tmp, recursive = TRUE)
+
+# Access elements
+images(sd)
+spatialPoints(sd)
 
 }
 \references{
@@ -67,7 +65,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: CuiweiG \email{48gaocuiwei@gmail.com}
+\strong{Maintainer}: Cuiwei Gao \email{48gaocuiwei@gmail.com} (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
 
 }
 \keyword{package}

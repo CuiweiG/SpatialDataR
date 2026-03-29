@@ -2,10 +2,26 @@ library(S4Vectors)
 
 test_that("CoordinateTransform constructor validates type", {
     expect_s4_class(CoordinateTransform("identity"),
-                    "CoordinateTransform")
+        "CoordinateTransform")
     expect_s4_class(CoordinateTransform("affine"),
-                    "CoordinateTransform")
+        "CoordinateTransform")
     expect_error(CoordinateTransform("invalid"))
+})
+
+test_that("CoordinateTransform validity rejects bad type", {
+    expect_error(
+        new("CoordinateTransform", type = "bogus"),
+        "identity.*affine"
+    )
+})
+
+test_that("CoordinateTransform validity rejects non-square", {
+    expect_error(
+        new("CoordinateTransform",
+            type = "affine",
+            affine = matrix(1:6, nrow = 2)),
+        "square"
+    )
 })
 
 test_that("identity transform returns unchanged coordinates", {
@@ -40,7 +56,7 @@ test_that("affine translation works correctly", {
 
 test_that("affine combined scale+translate works", {
     mat <- matrix(c(0.5, 0, 10, 0, 0.5, 20, 0, 0, 1),
-                  nrow = 3, byrow = TRUE)
+        nrow = 3, byrow = TRUE)
     ct <- CoordinateTransform("affine", affine = mat,
         input_cs = "pixels", output_cs = "microns")
     pts <- DataFrame(x = c(100, 200), y = c(50, 150))
@@ -49,6 +65,32 @@ test_that("affine combined scale+translate works", {
     expect_equal(result$y, c(45, 95))
     expect_equal(slot(ct, "input_cs"), "pixels")
     expect_equal(slot(ct, "output_cs"), "microns")
+})
+
+test_that("matrix method: identity returns unchanged", {
+    ct <- CoordinateTransform("identity")
+    coords <- matrix(c(1, 2, 3, 4), ncol = 2)
+    result <- transformCoords(coords, ct)
+    expect_equal(result, coords)
+})
+
+test_that("matrix method: scale works", {
+    mat <- diag(3)
+    mat[1, 1] <- 2.0
+    mat[2, 2] <- 3.0
+    ct <- CoordinateTransform("affine", affine = mat)
+    coords <- matrix(c(10, 20, 5, 15), ncol = 2)
+    colnames(coords) <- c("x", "y")
+    result <- transformCoords(coords, ct)
+    expect_equal(result[, 1], c(20, 40))
+    expect_equal(result[, 2], c(15, 45))
+    expect_equal(colnames(result), c("x", "y"))
+})
+
+test_that("matrix method: rejects 3-column matrix", {
+    ct <- CoordinateTransform("affine")
+    bad <- matrix(1:9, ncol = 3)
+    expect_error(transformCoords(bad, ct), "2 columns")
 })
 
 test_that("show method for CoordinateTransform works", {
@@ -67,6 +109,16 @@ test_that(".parseTransform handles identity", {
     expect_equal(slot(ct, "type"), "identity")
 })
 
+test_that(".parseTransform handles affine", {
+    aff <- list(c(1, 0, 10), c(0, 1, 20), c(0, 0, 1))
+    meta <- list(coordinateTransformations = list(
+        list(type = "affine", affine = aff)))
+    ct <- SpatialDataR:::.parseTransform(meta)
+    expect_s4_class(ct, "CoordinateTransform")
+    expect_equal(slot(ct, "type"), "affine")
+    expect_equal(slot(ct, "affine")[1, 3], 10)
+})
+
 test_that(".parseTransform handles scale", {
     meta <- list(coordinateTransformations = list(
         list(type = "scale", scale = c(0.2125, 0.2125))))
@@ -74,10 +126,17 @@ test_that(".parseTransform handles scale", {
     expect_s4_class(ct, "CoordinateTransform")
     expect_equal(slot(ct, "type"), "affine")
     expect_equal(slot(ct, "affine")[1, 1], 0.2125)
+    expect_equal(slot(ct, "affine")[2, 2], 0.2125)
 })
 
 test_that(".parseTransform returns NULL for empty", {
     expect_null(SpatialDataR:::.parseTransform(list()))
     expect_null(SpatialDataR:::.parseTransform(
         list(coordinateTransformations = list())))
+})
+
+test_that(".parseTransform returns NULL for unknown type", {
+    meta <- list(coordinateTransformations = list(
+        list(type = "rotation", angle = 45)))
+    expect_null(SpatialDataR:::.parseTransform(meta))
 })

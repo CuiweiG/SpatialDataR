@@ -9,11 +9,13 @@ NULL
 
 #' @rdname SpatialData-accessors
 #' @export
-setMethod("images", "SpatialData", function(x) slot(x, "images"))
+setMethod("images", "SpatialData",
+    function(x) slot(x, "images"))
 
 #' @rdname SpatialData-accessors
 #' @export
-setMethod("spatialLabels", "SpatialData", function(x) slot(x, "labels"))
+setMethod("spatialLabels", "SpatialData",
+    function(x) slot(x, "labels"))
 
 #' @rdname SpatialData-accessors
 #' @export
@@ -22,11 +24,13 @@ setMethod("spatialPoints", "SpatialData",
 
 #' @rdname SpatialData-accessors
 #' @export
-setMethod("shapes", "SpatialData", function(x) slot(x, "shapes"))
+setMethod("shapes", "SpatialData",
+    function(x) slot(x, "shapes"))
 
 #' @rdname SpatialData-accessors
 #' @export
-setMethod("tables", "SpatialData", function(x) slot(x, "tables"))
+setMethod("tables", "SpatialData",
+    function(x) slot(x, "tables"))
 
 #' @rdname SpatialData-accessors
 #' @export
@@ -39,19 +43,22 @@ setMethod("coordinateSystems", "SpatialData",
 setMethod("show", "SpatialData", function(object) {
     cat("SpatialData object\n")
     cat("  path:", slot(object, "path"), "\n")
-    cat("  images(", length(images(object)), "): ",
-        paste(names(images(object)), collapse = ", "), "\n", sep = "")
-    cat("  spatialLabels(", length(spatialLabels(object)), "): ",
-        paste(names(labels(object)), collapse = ", "), "\n", sep = "")
-    cat("  points(", length(spatialPoints(object)), "): ",
-        paste(names(spatialPoints(object)), collapse = ", "),
-        "\n", sep = "")
-    cat("  shapes(", length(shapes(object)), "): ",
-        paste(names(shapes(object)), collapse = ", "), "\n", sep = "")
-    cat("  tables(", length(tables(object)), "): ",
-        paste(names(tables(object)), collapse = ", "), "\n", sep = "")
+    .showSlot <- function(label, sl) {
+        n <- length(sl)
+        nms <- if (n > 0L) {
+            paste(names(sl), collapse = ", ")
+        } else {
+            ""
+        }
+        cat("  ", label, "(", n, "): ", nms, "\n", sep = "")
+    }
+    .showSlot("images", images(object))
+    .showSlot("spatialLabels", spatialLabels(object))
+    .showSlot("spatialPoints", spatialPoints(object))
+    .showSlot("shapes", shapes(object))
+    .showSlot("tables", tables(object))
     cs <- coordinateSystems(object)
-    if (length(cs) > 0) {
+    if (length(cs) > 0L) {
         cat("  coordinate_systems: ",
             paste(names(cs), collapse = ", "), "\n")
     }

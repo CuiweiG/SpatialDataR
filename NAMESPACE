@@ -3,6 +3,7 @@
 export(CoordinateTransform)
 export(coordinateSystems)
 export(images)
+export(readCSVElement)
 export(readParquetPoints)
 export(readSpatialData)
 export(readSpatialTable)

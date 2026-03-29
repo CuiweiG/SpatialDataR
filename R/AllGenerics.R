@@ -1,5 +1,5 @@
 # R/AllGenerics.R
-# Generic function definitions �?extension points for ecosystem
+# Generic function definitions — extension points for ecosystem
 
 #' @include AllClasses.R
 #' @importFrom methods setGeneric
@@ -10,7 +10,7 @@ NULL
 #' Access images from a SpatialData object
 #'
 #' @param x A \code{\linkS4class{SpatialData}} object.
-#' @return A \code{SimpleList} of image references.
+#' @return A \code{SimpleList} of image element descriptors.
 #' @export
 #' @rdname SpatialData-accessors
 #' @examples
@@ -20,28 +20,33 @@ NULL
 #' spatialPoints(sd)
 #' shapes(sd)
 #' tables(sd)
+#' coordinateSystems(sd)
 setGeneric("images", function(x) standardGeneric("images"))
 
 #' Access labels/segmentation masks
 #'
 #' @param x A \code{\linkS4class{SpatialData}} object.
-#' @return A \code{SimpleList} of label references.
+#' @return A \code{SimpleList} of label element descriptors.
 #' @export
 #' @rdname SpatialData-accessors
-setGeneric("spatialLabels", function(x) standardGeneric("spatialLabels"))
+setGeneric("spatialLabels",
+    function(x) standardGeneric("spatialLabels"))
 
 #' Access point coordinates
 #'
 #' @param x A \code{\linkS4class{SpatialData}} object.
-#' @return A \code{SimpleList} of point DataFrames.
+#' @return A \code{SimpleList} of point element descriptors or
+#'   \code{DataFrame} objects.
 #' @export
 #' @rdname SpatialData-accessors
-setGeneric("spatialPoints", function(x) standardGeneric("spatialPoints"))
+setGeneric("spatialPoints",
+    function(x) standardGeneric("spatialPoints"))
 
 #' Access shape geometries
 #'
 #' @param x A \code{\linkS4class{SpatialData}} object.
-#' @return A \code{SimpleList} of shape DataFrames.
+#' @return A \code{SimpleList} of shape element descriptors or
+#'   \code{DataFrame} objects.
 #' @export
 #' @rdname SpatialData-accessors
 setGeneric("shapes", function(x) standardGeneric("shapes"))
@@ -49,7 +54,8 @@ setGeneric("shapes", function(x) standardGeneric("shapes"))
 #' Access annotation tables
 #'
 #' @param x A \code{\linkS4class{SpatialData}} object.
-#' @return A \code{SimpleList} of \code{SpatialExperiment} objects.
+#' @return A \code{SimpleList} of table element descriptors or
+#'   \code{SpatialExperiment} objects.
 #' @export
 #' @rdname SpatialData-accessors
 setGeneric("tables", function(x) standardGeneric("tables"))
@@ -65,7 +71,11 @@ setGeneric("coordinateSystems", function(x)
 
 #' Apply coordinate transformation
 #'
-#' @param x Data to transform (points DataFrame, shapes, etc.).
+#' Transforms coordinates using an affine matrix. Supported inputs
+#' include \code{DataFrame} (with \code{x} and \code{y} columns)
+#' and plain numeric matrices (Nx2).
+#'
+#' @param x Data to transform (points DataFrame, matrix, etc.).
 #' @param transform A \code{\link{CoordinateTransform}} object.
 #' @param ... Additional arguments.
 #' @return Transformed data (same class as input).

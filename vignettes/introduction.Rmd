@@ -1,6 +1,6 @@
 ---
 title: "Introduction to SpatialDataR"
-author: "CuiweiG"
+author: "Cuiwei Gao"
 date: "`r Sys.Date()`"
 output:
   BiocStyle::html_document:
@@ -16,40 +16,55 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-# Installation
-
-```{r eval=FALSE}
-if (!requireNamespace("remotes", quietly = TRUE))
-    install.packages("remotes")
-remotes::install_github("CuiweiG/SpatialDataR")
-```
-
 # Introduction
 
 `SpatialDataR` provides native R infrastructure for reading
 SpatialData-formatted Zarr stores without Python dependencies.
-The Python `spatialdata` library (Marconato et al. 2024 *Nature
-Methods*) defined a universal format for spatial omics.
-R-side support has remained limited; this package provides a
-lightweight bridge to the Bioconductor ecosystem.
+The Python `spatialdata` library
+(Marconato et al. 2024 *Nature Methods*) defined a universal
+Zarr-based format for spatial omics. This package bridges that
+format to the R/Bioconductor ecosystem.
 
-## Positioning
+## Design principles
 
-`SpatialDataR` complements existing tools:
+- **No Python required**: reads `.zarr` stores directly using
+  R packages (`Rarr`, `pizzarr`, `arrow`)
+- **SpatialData-aware**: parses `.zattrs` metadata, discovers
+  elements, handles coordinate systems
+- **Bioconductor-native**: returns `DataFrame`, `SimpleList`,
+  and `SpatialExperiment` objects
+- **Format-flexible**: supports CSV and Parquet for tabular
+  elements, Zarr arrays for images/labels
 
-- **vs reticulate**: zero Python dependency, native R objects
-- **vs Rarr/pizzarr**: SpatialData-aware metadata parsing,
-  not just raw Zarr array reading
-- **vs SpatialExperiment**: reads SpatialData *stores*, not
-  individual matrices
+## Comparison with alternatives
 
-# Reading a SpatialData store
+| Feature | SpatialDataR | reticulate | Rarr/pizzarr |
+|---------|:---:|:---:|:---:|
+| Python-free | ✓ | ✗ | ✓ |
+| SpatialData metadata | ✓ | ✓ | ✗ |
+| Coordinate transforms | ✓ | ✓ | ✗ |
+| Bioconductor objects | ✓ | ✗ | ✗ |
+
+# Installation
+
+```{r eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("SpatialDataR")
+```
+
+# Quick start
+
+## Reading a SpatialData store
 
 The package ships a minimal Zarr store (`xenium_mini.zarr`)
-following the SpatialData specification.
+following the SpatialData specification. It contains a
+simulated 10x Xenium dataset: 50 cells, 10 genes, 500
+transcripts.
 
 ```{r read-store}
 library(SpatialDataR)
+library(S4Vectors)
 
 store_path <- system.file("extdata", "xenium_mini.zarr",
     package = "SpatialDataR")
@@ -57,23 +72,36 @@ sd <- readSpatialData(store_path)
 sd
 ```
 
-## Accessors
+## Accessing elements
+
+Each element type has a dedicated accessor. Images and labels
+are stored as path references (use `readZarrArray()` to load
+the actual data). Points, shapes, and tables are loaded
+eagerly from CSV/Parquet.
 
 ```{r accessors}
+# Image references (path + metadata)
 images(sd)
+
+# Labels references
 spatialLabels(sd)
-spatialPoints(sd)
-shapes(sd)
-tables(sd)
-```
 
-## Coordinate systems
+# Points — loaded as DataFrame
+pts <- spatialPoints(sd)[["transcripts"]]
+head(pts)
 
-```{r coord-sys}
-coordinateSystems(sd)
+# Shapes — loaded as DataFrame
+shp <- shapes(sd)[["cell_boundaries"]]
+head(shp)
+
+# Tables — obs/var metadata
+tbl <- tables(sd)[["table"]]
+head(tbl$obs)
 ```
 
 ## Selective reading
+
+Read only specific element types for faster loading:
 
 ```{r selective}
 sd_img <- readSpatialData(store_path,
@@ -81,26 +109,97 @@ sd_img <- readSpatialData(store_path,
 sd_img
 ```
 
+# Element-level readers
+
+## CSV elements
+
+Many SpatialData stores include CSV-backed tabular data:
+
+```{r csv-reader}
+csv_path <- file.path(store_path, "points", "transcripts",
+    "transcripts.csv")
+pts_df <- readCSVElement(csv_path)
+head(pts_df)
+```
+
+## Tables (AnnData format)
+
+`readSpatialTable()` reads the AnnData-formatted table group,
+extracting obs (cell metadata) and var (gene metadata):
+
+```{r table-reader}
+tbl <- readSpatialTable(
+    file.path(store_path, "tables", "table"))
+str(tbl)
+```
+
+## Zarr arrays
+
+For image and label data stored as Zarr arrays, use
+`readZarrArray()` (requires `Rarr` or `pizzarr`):
+
+```{r zarr-reader, eval=FALSE}
+img <- readZarrArray(
+    file.path(store_path, "images", "morphology", "scale0"))
+dim(img)
+```
+
 # Coordinate transformations
 
 SpatialData stores define coordinate systems for aligning
-multi-modal data. `SpatialDataR` supports affine transforms.
+multi-modal data. `SpatialDataR` supports affine transforms
+for mapping between coordinate spaces.
+
+## Creating transforms
 
 ```{r transforms}
-library(S4Vectors)
+# Identity (no-op)
+ct_id <- CoordinateTransform("identity")
 
-pts <- DataFrame(x = c(100, 200, 300), y = c(50, 150, 250))
-
-# Pixel-to-micron transformation (0.2125 um/pixel)
+# Pixel-to-micron transformation (0.2125 µm/pixel)
 ct <- CoordinateTransform("affine",
     affine = matrix(c(0.2125, 0, 0,
                       0, 0.2125, 0,
                       0, 0, 1), nrow = 3, byrow = TRUE),
     input_cs = "pixels", output_cs = "microns")
 ct
+```
 
+## Applying transforms
+
+Works on both `DataFrame` and `matrix` inputs:
+
+```{r apply-transform}
+# DataFrame
+pts <- DataFrame(x = c(100, 200, 300), y = c(50, 150, 250))
 pts_um <- transformCoords(pts, ct)
 pts_um
+
+# Matrix
+coords <- matrix(c(100, 200, 50, 150), ncol = 2)
+colnames(coords) <- c("x", "y")
+coords_um <- transformCoords(coords, ct)
+coords_um
+```
+
+## Parsing transforms from metadata
+
+Element metadata often contains coordinate transformation
+definitions. The internal `.parseTransform()` function handles
+identity, affine, and scale types:
+```{r parse-transform}
+img_meta <- images(sd)[["morphology"]]$metadata
+img_meta$coordinateTransformations
+```
+
+# Coordinate systems
+
+The top-level `.zattrs` defines the coordinate systems for
+aligning multi-modal elements:
+
+```{r coord-systems}
+cs <- coordinateSystems(sd)
+str(cs)
 ```
 
 # Session info
@@ -108,3 +207,9 @@ pts_um
 ```{r session}
 sessionInfo()
 ```
+
+# References
+
+Marconato L et al. (2024). SpatialData: an open and universal
+data framework for spatial omics. *Nat Methods* 21:2196-2209.
+doi:10.1038/s41592-024-02212-x

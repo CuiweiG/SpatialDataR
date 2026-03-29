@@ -15,24 +15,31 @@
 \description{
 A lightweight R-native representation of a SpatialData Zarr
 store. Holds references to images, labels, points, shapes,
-and annotation tables without loading full data into memory.
+and annotation tables. Element data is loaded on explicit
+request via element-level reader functions.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{images}}{\code{SimpleList} of image references.}
+\item{\code{images}}{\code{SimpleList} of image element descriptors.
+Each entry is a list with \code{path}, \code{type},
+\code{name}, and \code{metadata}.}
 
-\item{\code{labels}}{\code{SimpleList} of label/segmentation references.}
+\item{\code{labels}}{\code{SimpleList} of label/segmentation descriptors.}
 
-\item{\code{points}}{\code{SimpleList} of point DataFrames.}
+\item{\code{points}}{\code{SimpleList} of point element descriptors or
+\code{DataFrame} objects (when loaded via CSV/Parquet).}
 
-\item{\code{shapes}}{\code{SimpleList} of shape DataFrames.}
+\item{\code{shapes}}{\code{SimpleList} of shape descriptors or
+\code{DataFrame} objects (when loaded via CSV/Parquet).}
 
-\item{\code{tables}}{\code{SimpleList} of annotation tables.}
+\item{\code{tables}}{\code{SimpleList} of annotation table descriptors
+or \code{SpatialExperiment} objects (when successfully loaded).}
 
-\item{\code{coordinate_systems}}{\code{list} of coordinate systems.}
+\item{\code{coordinate_systems}}{\code{list} of coordinate system
+definitions parsed from the top-level \code{.zattrs}.}
 
-\item{\code{metadata}}{\code{list} of additional metadata.}
+\item{\code{metadata}}{\code{list} of additional Zarr store metadata.}
 
 \item{\code{path}}{Character. Path to the source Zarr store.}
 }}

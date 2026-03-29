@@ -16,4 +16,9 @@ A \code{\link{CoordinateTransform}} or \code{NULL}.
 Reads coordinate transformation definitions from
 SpatialData element \code{.zattrs} metadata.
 }
+\examples{
+meta <- list(coordinateTransformations = list(
+    list(type = "scale", scale = c(0.2125, 0.2125))))
+SpatialDataR:::.parseTransform(meta)
+}
 \keyword{internal}

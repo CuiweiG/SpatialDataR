@@ -43,15 +43,18 @@ coordinateSystems(x)
 \item{x}{A \code{\linkS4class{SpatialData}} object.}
 }
 \value{
-A \code{SimpleList} of image references.
+A \code{SimpleList} of image element descriptors.
 
-A \code{SimpleList} of label references.
+A \code{SimpleList} of label element descriptors.
 
-A \code{SimpleList} of point DataFrames.
+A \code{SimpleList} of point element descriptors or
+  \code{DataFrame} objects.
 
-A \code{SimpleList} of shape DataFrames.
+A \code{SimpleList} of shape element descriptors or
+  \code{DataFrame} objects.
 
-A \code{SimpleList} of \code{SpatialExperiment} objects.
+A \code{SimpleList} of table element descriptors or
+  \code{SpatialExperiment} objects.
 
 A named list of coordinate system definitions.
 }
@@ -75,4 +78,5 @@ spatialLabels(sd)
 spatialPoints(sd)
 shapes(sd)
 tables(sd)
+coordinateSystems(sd)
 }
