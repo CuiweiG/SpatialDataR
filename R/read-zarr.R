@@ -83,12 +83,23 @@ readSpatialData <- function(path, elements = NULL, ...) {
 #' @return A list of parsed metadata.
 #' @keywords internal
 .readZattrs <- function(path) {
-    zattrs_file <- file.path(path, ".zattrs")
-    if (file.exists(zattrs_file)) {
-        fromJSON(zattrs_file, simplifyVector = FALSE)
-    } else {
-        list()
+    ## Zarr v2: .zattrs
+    zattrs_v2 <- file.path(path, ".zattrs")
+    if (file.exists(zattrs_v2)) {
+        return(fromJSON(zattrs_v2,
+            simplifyVector = FALSE))
     }
+    ## Zarr v3: zarr.json
+    zarr_json <- file.path(path, "zarr.json")
+    if (file.exists(zarr_json)) {
+        meta <- fromJSON(zarr_json,
+            simplifyVector = FALSE)
+        ## Extract attributes from Zarr v3 format
+        attrs <- meta[["attributes"]]
+        if (!is.null(attrs)) return(attrs)
+        return(meta)
+    }
+    list()
 }
 
 #' Discover element types in a Zarr store
@@ -120,12 +131,7 @@ readSpatialData <- function(path, elements = NULL, ...) {
 
     elements <- lapply(element_names, function(name) {
         elem_path <- file.path(dir_path, name)
-        zattrs <- file.path(elem_path, ".zattrs")
-        meta <- if (file.exists(zattrs)) {
-            fromJSON(zattrs, simplifyVector = FALSE)
-        } else {
-            list()
-        }
+        meta <- .readZattrs(elem_path)
         list(
             path = elem_path,
             type = type,
@@ -152,6 +158,21 @@ readSpatialData <- function(path, elements = NULL, ...) {
         elem_path <- file.path(dir_path, name)
         meta <- .readZattrs(elem_path)
         data <- .loadTabularElement(elem_path)
+        ## GeoParquet single file (shapes)
+        if (is.null(data)) {
+            gpq <- list.files(elem_path,
+                "^shapes[.]parquet$",
+                full.names = TRUE)
+            if (length(gpq) > 0L &&
+                requireNamespace("arrow",
+                    quietly = TRUE)) {
+                data <- tryCatch({
+                    df <- as.data.frame(
+                        arrow::read_parquet(gpq[1L]))
+                    DataFrame(df)
+                }, error = function(e) NULL)
+            }
+        }
         if (!is.null(data)) {
             attr(data, "spatialdata_metadata") <- meta
             data
@@ -169,17 +190,31 @@ readSpatialData <- function(path, elements = NULL, ...) {
 #' @return A \code{DataFrame} or \code{NULL}.
 #' @keywords internal
 .loadTabularElement <- function(elem_path) {
+    ## Check for Parquet files (incl. subdirectories)
     pq <- list.files(elem_path, "[.]parquet$",
         full.names = TRUE, recursive = TRUE)
+    ## Also check for .parquet directories
+    pq_dirs <- list.dirs(elem_path,
+        recursive = FALSE, full.names = TRUE)
+    pq_dirs <- pq_dirs[grepl("[.]parquet$", pq_dirs)]
+
     csv <- list.files(elem_path, "[.]csv$",
         full.names = TRUE, recursive = TRUE)
 
     data <- NULL
-    if (length(pq) > 0L &&
+    ## Try Parquet files first
+    if ((length(pq) > 0L || length(pq_dirs) > 0L) &&
         requireNamespace("arrow", quietly = TRUE)) {
-        data <- tryCatch(readParquetPoints(elem_path),
+        target <- if (length(pq) > 0L) {
+            elem_path
+        } else {
+            pq_dirs[1L]
+        }
+        data <- tryCatch(
+            readParquetPoints(target),
             error = function(e) NULL)
     }
+    ## Fallback to CSV
     if (is.null(data) && length(csv) > 0L) {
         data <- tryCatch(readCSVElement(csv[1L]),
             error = function(e) NULL)
@@ -223,10 +258,15 @@ readSpatialData <- function(path, elements = NULL, ...) {
 #' @keywords internal
 .extractCoordinateSystems <- function(metadata) {
     sd_attrs <- metadata[["spatialdata_attrs"]]
+    if (is.null(sd_attrs)) {
+        ## Zarr v3: might be nested under attributes
+        sd_attrs <- metadata[["attributes"]]
+        if (!is.null(sd_attrs)) {
+            sd_attrs <- sd_attrs[["spatialdata_attrs"]]
+        }
+    }
     if (is.null(sd_attrs)) return(list())
-
     cs <- sd_attrs[["coordinate_systems"]]
     if (is.null(cs)) return(list())
-
     cs
 }

@@ -72,10 +72,12 @@ validateSpatialData <- function(path, strict = FALSE) {
 .validateTopZattrs <- function(path) {
     errors <- character()
     warnings <- character()
-    zf <- file.path(path, ".zattrs")
+    zf_v2 <- file.path(path, ".zattrs")
+    zf_v3 <- file.path(path, "zarr.json")
+    zf <- if (file.exists(zf_v2)) zf_v2 else zf_v3
     if (!file.exists(zf)) {
         errors <- c(errors,
-            "Missing top-level .zattrs file")
+            "Missing top-level .zattrs/zarr.json")
     } else {
         meta <- .safeReadJSON(zf)
         if (is.null(meta)) {
@@ -128,8 +130,11 @@ validateSpatialData <- function(path, strict = FALSE) {
 #' @keywords internal
 .validateElement <- function(elem_path, etype, ename) {
     warns <- character()
-    za <- file.path(elem_path, ".zattrs")
-    has_zattrs <- file.exists(za)
+    za_v2 <- file.path(elem_path, ".zattrs")
+    za_v3 <- file.path(elem_path, "zarr.json")
+    has_zattrs <- file.exists(za_v2) ||
+        file.exists(za_v3)
+    za <- if (file.exists(za_v2)) za_v2 else za_v3
     has_transform <- FALSE
     if (has_zattrs) {
         meta <- .safeReadJSON(za)
