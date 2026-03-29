@@ -2,11 +2,13 @@
 
 export(CoordinateTransform)
 export(aggregatePoints)
+export(assignToRegions)
 export(bboxQuery)
 export(combineSpatialData)
 export(composeTransforms)
 export(coordinateSystemElements)
 export(coordinateSystems)
+export(cropImage)
 export(elementSummary)
 export(elementTransform)
 export(filterSample)
