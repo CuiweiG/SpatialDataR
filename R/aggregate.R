@@ -103,10 +103,13 @@ aggregatePoints <- function(
     feat_valid <- features[valid_mask]
     rid_valid <- as.character(region_ids[valid_mask])
     ## Vectorised tabulation
-    tbl <- table(region = factor(rid_valid, levels = ur),
-        feature = factor(feat_valid))
-    mat <- as.matrix(tbl)
+    uf <- sort(unique(feat_valid))
+    tbl <- table(
+        factor(rid_valid, levels = ur),
+        factor(feat_valid, levels = uf))
+    mat <- unclass(tbl)
     storage.mode(mat) <- "integer"
+    dimnames(mat) <- list(ur, uf)
     mat
 }
 
