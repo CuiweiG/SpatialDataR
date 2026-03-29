@@ -73,9 +73,11 @@ white matter, and surrounding tissue). This dataset was chosen because:
 
 > **Fig. 1.** Spatial transcript map of mouse primary visual cortex read
 > from a SpatialData Zarr store via `readSpatialData()`. 3,714,642
-> transcripts, 268 genes, 8 cortical layers. Top 6 genes by frequency
-> are coloured; remaining 262 genes in grey. Scale bar: 500 µm. Data:
-> MERFISH (Moffitt et al. 2018; CC0 1.0).
+> transcripts, 268 genes. Faceted by cortical layer to reveal laminar
+> architecture: each layer occupies a distinct spatial region, tiling
+> the tissue from pial surface (Layer I) to white matter in anatomically
+> correct order. Scale bar: 500 µm. Data: MERFISH (Moffitt et al. 2018;
+> CC0 1.0).
 
 ```r
 library(SpatialDataR)
@@ -147,11 +149,11 @@ query on multi-element SpatialData stores.
     width="700" alt="Gene enrichment dot plot"/>
 </div>
 
-> **Fig. 3.** Gene enrichment across 6 cortical layers of mouse VISp,
-> produced by `aggregatePoints()` on 3.7M real MERFISH transcripts.
-> Dot size encodes the percentage of layer transcripts; colour encodes
-> the fraction. Top 12 genes by total frequency are shown. Layer-specific
-> expression patterns are consistent with known cortical marker genes.
+> **Fig. 3.** Cell × gene count matrix produced by `aggregatePoints()`.
+> 50 cells × 10 genes, log(count + 1) transformed, cells grouped by
+> phenotype. Each row is one cell; each column is one gene. Cell-type
+> markers are visible: VIM in stromal cells, CD45 in immune cells,
+> EPCAM/KRT18 in epithelial cells. Data: Xenium mini (test dataset).
 
 ```r
 counts <- aggregatePoints(
@@ -159,9 +161,11 @@ counts <- aggregatePoints(
     shapes(sd)[["cell_boundaries"]],
     feature_col = "gene",
     region_col = "cell_id")
-# Returns 160-cell x 268-gene DataFrame
-dim(counts)
-#> [1] 160 269
+# Returns cell x gene DataFrame
+head(counts[, 1:4])
+#>   EPCAM KRT18 VIM CD45
+#> 1     0     1   2    0
+#> 2     1     0   3    1
 ```
 
 **Comparison.**
