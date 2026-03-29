@@ -73,7 +73,7 @@ setGeneric("coordinateSystems", function(x)
 #'
 #' Transforms coordinates using an affine matrix. Supported inputs
 #' include \code{DataFrame} (with \code{x} and \code{y} columns)
-#' and plain numeric matrices (Nx2).
+#' and plain numeric matrices (Nx2 for 2D, Nx3 for 3D).
 #'
 #' @param x Data to transform (points DataFrame, matrix, etc.).
 #' @param transform A \code{\link{CoordinateTransform}} object.

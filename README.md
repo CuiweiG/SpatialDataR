@@ -16,25 +16,28 @@
 
 [SpatialData](https://spatialdata.scverse.org/) (Marconato et al.
 2024 *Nat Methods*) defines a universal Zarr-based format for
-spatial omics. R-side support has remained limited, with no mature
-native Bioconductor-oriented reader providing direct, zero-Python
-access to SpatialData stores.
+spatial omics, building on the OME-NGFF specification (Moore et al.
+2023). R-side support has remained limited, with no mature native
+Bioconductor-oriented reader providing direct, zero-Python access
+to SpatialData stores.
 
 ## What SpatialDataR provides
 
 `SpatialDataR` reads SpatialData `.zarr` stores directly in R:
 
 - **Store discovery**: `readSpatialData()` parses `.zattrs`
-  metadata and discovers images, labels, points, shapes, tables
-- **Element readers**: `readZarrArray()` (via Rarr/pizzarr),
-  `readParquetPoints()` (via arrow), `readCSVElement()`,
-  `readSpatialTable()`
-- **Coordinate transforms**: `CoordinateTransform` class with
-  affine transformation support for `DataFrame` and `matrix`
-- **Eager loading**: points and shapes stored as CSV/Parquet are
-  loaded as `DataFrame` objects on store read; images and labels
-  are stored as path references for on-demand loading via
-  `readZarrArray()`
+  metadata and discovers all element types
+- **Element readers**: `readZarrArray()` (Rarr/pizzarr),
+  `readParquetPoints()` (arrow), `readCSVElement()`,
+  `readSpatialTable()` (AnnData → SpatialExperiment)
+- **Coordinate transforms**: full OME-NGFF support — identity,
+  scale, translation, affine, sequence, with `composeTransforms()`
+  and `invertTransform()`; 2D and 3D
+- **Spatial queries**: `bboxQuery()` for bounding box subsetting
+  (mirrors Python `spatialdata.bounding_box_query()`)
+- **Interoperability**: `elementSummary()`,
+  `coordinateSystemElements()`, `[` subsetting, SpatialExperiment
+  coercion
 
 ```r
 library(SpatialDataR)
@@ -44,10 +47,17 @@ sd
 #>   path: /data/xenium_breast.zarr
 #>   images(1): morphology
 #>   spatialLabels(1): cell_labels
-#>   spatialPoints(1): transcripts
-#>   shapes(1): cell_boundaries
+#>   spatialPoints(1): transcripts [500 rows]
+#>   shapes(1): cell_boundaries [50 rows]
 #>   tables(1): table
 #>   coordinate_systems: global, pixels
+
+# Spatial query
+sub <- bboxQuery(sd, xmin = 0, xmax = 100, ymin = 0, ymax = 100)
+
+# Transform coordinates
+ct <- elementTransform(images(sd)[["morphology"]])
+inv <- invertTransform(ct)
 ```
 
 ---
@@ -78,6 +88,9 @@ sd
 | `shapes()` | Access shape DataFrames |
 | `tables()` | Access annotation tables |
 | `coordinateSystems()` | Access coordinate system metadata |
+| `elementSummary()` | Tabulate all elements with metadata |
+| `coordinateSystemElements()` | Map coordinate systems → elements |
+| `[` | Subset by element name |
 
 ### Element-level readers
 
@@ -92,8 +105,17 @@ sd
 
 | Function | Description |
 |----------|-------------|
-| `CoordinateTransform()` | Construct affine/identity transformation |
-| `transformCoords()` | Apply transformation (DataFrame or matrix) |
+| `CoordinateTransform()` | Construct affine/identity transform (2D/3D) |
+| `transformCoords()` | Apply transform (DataFrame or matrix) |
+| `composeTransforms()` | Chain two transforms |
+| `invertTransform()` | Compute inverse transform |
+| `elementTransform()` | Extract transform from element metadata |
+
+### Spatial queries
+
+| Function | Description |
+|----------|-------------|
+| `bboxQuery()` | Bounding box spatial query |
 
 ---
 
@@ -111,3 +133,9 @@ remotes::install_github("CuiweiG/SpatialDataR")
 - Marconato L et al. (2024). SpatialData: an open and universal
   data framework for spatial omics. *Nat Methods* 21:2196.
   doi:10.1038/s41592-024-02212-x
+- Moore J et al. (2023). OME-Zarr: a cloud-optimized bioimaging
+  file format. *Histochem Cell Biol* 160:223.
+  doi:10.1007/s00418-023-02209-1
+- Righelli D et al. (2022). SpatialExperiment: infrastructure for
+  spatially-resolved transcriptomics data in R. *Bioinformatics*
+  38:3128. doi:10.1093/bioinformatics/btac299

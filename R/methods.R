@@ -3,7 +3,7 @@
 
 #' @include AllClasses.R
 #' @include AllGenerics.R
-#' @importFrom methods setMethod show slot
+#' @importFrom methods setMethod show slot is
 #' @importFrom S4Vectors SimpleList
 NULL
 
@@ -50,7 +50,24 @@ setMethod("show", "SpatialData", function(object) {
         } else {
             ""
         }
-        cat("  ", label, "(", n, "): ", nms, "\n", sep = "")
+        ## Show row counts for loaded DataFrames
+        extra <- ""
+        if (n > 0L) {
+            counts <- vapply(sl, function(elem) {
+                if (is(elem, "DataFrame")) nrow(elem)
+                else NA_integer_
+            }, integer(1))
+            loaded <- sum(!is.na(counts))
+            if (loaded > 0L) {
+                extra <- paste0(
+                    " [",
+                    paste(counts[!is.na(counts)],
+                        "rows", collapse = ", "),
+                    "]")
+            }
+        }
+        cat("  ", label, "(", n, "): ", nms, extra,
+            "\n", sep = "")
     }
     .showSlot("images", images(object))
     .showSlot("spatialLabels", spatialLabels(object))
@@ -68,12 +85,14 @@ setMethod("show", "SpatialData", function(object) {
 #' @param object A \code{CoordinateTransform} object.
 #' @export
 setMethod("show", "CoordinateTransform", function(object) {
-    cat("CoordinateTransform\n")
+    aff <- slot(object, "affine")
+    dims <- if (nrow(aff) == 4L) "3D" else "2D"
+    cat("CoordinateTransform (", dims, ")\n", sep = "")
     cat("  type:", slot(object, "type"), "\n")
     cat("  ", slot(object, "input_cs"), " -> ",
         slot(object, "output_cs"), "\n", sep = "")
     if (slot(object, "type") == "affine") {
         cat("  affine:\n")
-        print(slot(object, "affine"))
+        print(aff)
     }
 })

@@ -4,18 +4,20 @@ Title: Native R Interface to the SpatialData Zarr Format for Spatial
 Version: 0.99.0
 Authors@R:
     person("Cuiwei", "Gao", email = "48gaocuiwei@gmail.com",
-    role = c("aut", "cre"),
-    comment = c(ORCID = "0000-0000-0000-0000"))
-Description: Provides native R infrastructure for inspecting and
-    reading SpatialData-formatted Zarr stores without Python
-    dependencies. Discovers and references images, labels,
-    points, shapes, and annotation tables stored in '.zarr'
-    directories. Includes element-level readers for Zarr arrays
-    (via 'Rarr' or 'pizzarr'), CSV and Parquet point tables
-    (via 'arrow'), and coordinate system transformations.
-    Designed as a lightweight bridge between the Python
-    'SpatialData' ecosystem and R/Bioconductor spatial analysis
-    workflows.
+    role = c("aut", "cre"))
+Description: Provides native R infrastructure for reading
+    SpatialData-formatted Zarr stores (Marconato et al. 2024,
+    <doi:10.1038/s41592-024-02212-x>) without Python dependencies.
+    Discovers and reads images, labels, points, shapes, and
+    annotation tables from '.zarr' directories following the
+    OME-NGFF specification (Moore et al. 2023,
+    <doi:10.1007/s00418-023-02209-1>). Supports Zarr array reading
+    (via 'Rarr' or 'pizzarr'), Parquet and CSV tabular data
+    (via 'arrow'), affine coordinate transformations with
+    composition and 3D support, bounding box spatial queries,
+    and coercion to 'SpatialExperiment'. Designed as a bridge
+    between the Python 'SpatialData' ecosystem and
+    R/Bioconductor spatial analysis workflows.
 License: Artistic-2.0
 Depends: R (>= 4.4.0)
 Imports:
@@ -39,7 +41,7 @@ Suggests:
     BiocStyle,
     BiocCheck
 biocViews: Spatial, SingleCell, DataImport, Infrastructure,
-    DataRepresentation
+    DataRepresentation, Transcriptomics, Proteomics
 URL: https://github.com/CuiweiG/SpatialDataR
 BugReports: https://github.com/CuiweiG/SpatialDataR/issues
 Encoding: UTF-8
@@ -50,7 +52,9 @@ Collate:
     'AllClasses.R'
     'AllGenerics.R'
     'SpatialDataR-package.R'
+    'coerce.R'
     'methods.R'
     'read-elements.R'
     'read-zarr.R'
+    'spatial-query.R'
     'transforms.R'

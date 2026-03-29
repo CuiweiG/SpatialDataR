@@ -136,8 +136,8 @@ test_that("transformCoords works on matrix", {
 
 test_that("transformCoords matrix rejects wrong dimensions", {
     ct <- CoordinateTransform("affine")
-    bad <- matrix(1:9, ncol = 3)
-    expect_error(transformCoords(bad, ct), "2 columns")
+    bad <- matrix(1:8, ncol = 4)
+    expect_error(transformCoords(bad, ct), "2.*3.*columns")
 })
 
 test_that("show methods work without errors", {

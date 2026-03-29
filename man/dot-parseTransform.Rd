@@ -14,7 +14,9 @@ A \code{\link{CoordinateTransform}} or \code{NULL}.
 }
 \description{
 Reads coordinate transformation definitions from
-SpatialData element \code{.zattrs} metadata.
+SpatialData element \code{.zattrs} metadata. Supports
+identity, affine, scale, translation, and sequence types
+from the OME-NGFF specification.
 }
 \examples{
 meta <- list(coordinateTransformations = list(

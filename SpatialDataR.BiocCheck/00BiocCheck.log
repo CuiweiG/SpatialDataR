@@ -1,0 +1,70 @@
+Checking for deprecated package usage... OK
+Checking for remote package usage... OK
+Checking for 'LazyData: true' usage... OK
+Checking version number... OK
+Checking for version number mismatch... OK
+Checking new package version number... OK
+Checking R version dependency... OK
+Checking package size... OK
+Checking individual file sizes... OK
+Checking biocViews... OK
+Checking that biocViews are present... OK
+Checking package type based on biocViews... OK
+Checking for non-trivial biocViews... OK
+Checking that biocViews come from the same category... OK
+Checking biocViews validity... OK
+Checking for recommended biocViews... OK
+Checking build system compatibility... OK
+Checking for proper Description: field... OK
+Checking if DESCRIPTION is well formatted... OK
+Checking for whitespace in DESCRIPTION field names... OK
+Checking that Package field matches directory/tarball name... OK
+Checking for Version: field...
+Consider adding the maintainer's ORCID iD in 'Authors@R' with 'comment=c(ORCID="...")'
+Checking License: for restrictive use... OK
+Checking for recommended DESCRIPTION fields... OK
+Checking for Bioconductor software dependencies... OK
+Checking for pinned package versions in DESCRIPTION... OK
+Checking .Rbuildignore... OK
+Checking for stray BiocCheck output folders... OK
+Checking vignette directory... OK
+Checking package installation calls in R code... OK
+Checking for library/require of SpatialDataR... OK
+Checking coding practice... OK
+Checking parsed R code in R directory, examples, vignettes...
+Avoid '<<-' if possible (found 2 times)
+<<- in R/coerce.R (line 35, column 39)
+<<- in R/coerce.R (line 120, column 31)
+Checking function lengths...
+The recommended function length is 50 lines or less. There are 2 functions greater than 50 lines.
+The longest 5 functions are:
+.readPointsOrShapes() (R/read-zarr.R): 61 lines
+.readAnnDataGroup() (R/read-elements.R): 60 lines
+Checking man page documentation...
+Consider adding runnable examples to man pages that document exported objects.
+transformCoords.Rd
+Checking package NEWS... OK
+Checking unit tests... OK
+Checking skip_on_bioc() in tests... OK
+Checking formatting of DESCRIPTION, NAMESPACE, man pages, R source, and vignette source...
+Consider multiples of 4 spaces for line indents; 12 lines (1%) are not.
+First few lines:
+vignettes/introduction.Rmd#L31   (`Rarr`, `pizzarr`, `arrow`, `jsonlite ...
+vignettes/introduction.Rmd#L33   elements, handles coordinate systems a ...
+vignettes/introduction.Rmd#L35   and `SpatialExperiment` objects ...
+vignettes/introduction.Rmd#L37   transformation vocabulary (identity, s ...
+vignettes/introduction.Rmd#L38   affine, sequence) ...
+vignettes/introduction.Rmd#L220   data framework for spatial omics. *Nat ...
+vignettes/introduction.Rmd#L221   doi:10.1038/s41592-024-02212-x ...
+vignettes/introduction.Rmd#L224   file format with international communi ...
+vignettes/introduction.Rmd#L225   Cell Biol* 160:223-251. doi:10.1007/s0 ...
+vignettes/introduction.Rmd#L228   for spatially-resolved transcriptomics ...
+vignettes/introduction.Rmd#L229   Bioconductor. *Bioinformatics* 38:3128 ...
+vignettes/introduction.Rmd#L230   doi:10.1093/bioinformatics/btac299 ...
+Checking if package already exists in CRAN... OK
+Checking if new package already exists in Bioconductor... OK
+Checking for bioc-devel mailing list subscription...
+Cannot determine whether maintainer is subscribed to the Bioc-Devel mailing list (requires admin credentials). Subscribe here: https://stat.ethz.ch/mailman/listinfo/bioc-devel
+Checking for support site registration...
+Unable to find your email in the Support Site:
+  HTTP 504 Gateway Timeout.

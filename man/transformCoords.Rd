@@ -13,40 +13,17 @@ transformCoords(x, transform, ...)
 \S4method{transformCoords}{matrix,CoordinateTransform}(x, transform, ...)
 }
 \arguments{
-\item{x}{A numeric matrix with 2 columns (x, y).}
+\item{x}{Data to transform (points DataFrame, matrix, etc.).}
 
-\item{transform}{A \code{\link{CoordinateTransform}}.}
+\item{transform}{A \code{\link{CoordinateTransform}} object.}
 
-\item{...}{Additional arguments (unused).}
+\item{...}{Additional arguments.}
 }
 \value{
 Transformed data (same class as input).
-
-A \code{DataFrame} with transformed coordinates.
-
-A numeric matrix with transformed coordinates.
 }
 \description{
 Transforms coordinates using an affine matrix. Supported inputs
 include \code{DataFrame} (with \code{x} and \code{y} columns)
-and plain numeric matrices (Nx2).
-
-Transforms x,y coordinates in a \code{DataFrame} using an
-affine matrix.
-
-Transforms an Nx2 numeric matrix of (x, y) coordinates.
-}
-\examples{
-pts <- S4Vectors::DataFrame(x = c(100, 200), y = c(50, 150))
-# Scale by 0.5
-mat <- matrix(c(0.5, 0, 0, 0, 0.5, 0, 0, 0, 1),
-    nrow = 3, byrow = TRUE)
-ct <- CoordinateTransform("affine", affine = mat)
-transformCoords(pts, ct)
-coords <- matrix(c(100, 200, 50, 150), ncol = 2)
-colnames(coords) <- c("x", "y")
-mat <- matrix(c(2, 0, 0, 0, 2, 0, 0, 0, 1),
-    nrow = 3, byrow = TRUE)
-ct <- CoordinateTransform("affine", affine = mat)
-transformCoords(coords, ct)
+and plain numeric matrices (Nx2 for 2D, Nx3 for 3D).
 }
