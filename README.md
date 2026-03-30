@@ -21,54 +21,53 @@ and NanoString CosMx platforms. However, R/Bioconductor users currently
 require Python (via `reticulate`) to access these stores, creating
 friction in analysis workflows that otherwise run entirely in R.
 
-**SpatialDataR** provides a native R interface for reading, querying,
-aggregating, transforming, and writing SpatialData-formatted Zarr
-stores, exposing elements through Bioconductor-standard S4 classes:
+**SpatialDataR** provides a native R interface that goes beyond data
+access — it bridges SpatialData stores directly into the Bioconductor
+ecosystem and leverages R's statistical computing strengths for spatial
+analysis that has no equivalent in Python:
 
-- **Points and shapes**: `DataFrame` (CSV, Parquet, GeoParquet)
-- **Images and labels**: lazy path references, loadable as in-memory
-  arrays (`readZarrArray()`) or `DelayedArray` (`readZarrDelayed()`)
-- **Tables**: AnnData-style obs/var, with optional `SpatialExperiment`
-  coercion
-- **Transforms**: OME-NGFF coordinate transforms (identity, scale,
-  translation, affine, sequence) in 2D/3D
+- **Zero-friction Bioconductor bridge**: `readSpatialData()` →
+  `toSingleCellExperiment()` in two lines
+- **Spatial statistics**: Moran's I autocorrelation, spatial
+  differential expression, spatstat point pattern integration
+- **Cross-platform**: Xenium, MERFISH, Visium HD — same API,
+  no platform-specific code
 
 ## Validation
 
 Figures 1--4 use the **10x Xenium human breast cancer** dataset
 (Janesick et al. 2023, *Nat Commun*): **34,472,294 transcripts**,
-**321 genes**, **167,780 cells** across a 7.5 x 5.5 mm tissue section.
-Figure 5 adds the **Allen Institute MERFISH mouse VISp** dataset
-(SpaceTx consortium): **3,714,642 transcripts**, **2,389 cells**,
-**268 genes**.
-Both read from SpatialData Zarr stores using `readSpatialData()`.
-CC BY 4.0 / CC0 1.0. Reproducible via `inst/scripts/`.
+**313 genes**, **167,780 cells**. Figure 5 adds the **Allen Institute
+MERFISH mouse VISp** dataset (SpaceTx consortium): **3,714,642
+transcripts**, **2,389 cells**, **268 genes**. Both read from
+SpatialData Zarr v3 stores. Reproducible via `inst/scripts/`.
 
 ---
 
-## 1. Multi-element spatial data store read in a single call
+## 1. SpatialData to Bioconductor in two function calls
 
 <div align="center">
 <img src="man/figures/fig1_store_reading.png"
-    width="700" alt="Xenium breast cancer tissue overview"/>
+    width="700" alt="Xenium tissue overview"/>
 </div>
 
 > **Fig. 1.** (**a**) Transcript density map (34.5M molecules, 30 um
-> bins) reveals ductal architecture, tumour nests, and stromal
-> compartments. (**b**) Cell centroids (167,780 cells) coloured by
-> total transcript count. Both elements read from a single
-> `readSpatialData()` call. Scale bar: 1 mm.
+> bins). (**b**) Cell centroids (167,780 cells) coloured by total
+> transcript count. Both elements obtained via `readSpatialData()` →
+> `toSingleCellExperiment()`, producing a 313 x 167,780
+> SingleCellExperiment ready for scran/scater analysis.
 
 ```r
 library(SpatialDataR)
-sd <- readSpatialData("xenium_breast.zarr")
-sd
-#> SpatialData object
-#>   spatialPoints(1): transcripts [34472294 rows]
-#>   shapes(3): cell_boundaries, cell_circles, xenium_landmarks
-#>   images(2): morphology_focus, morphology_mip
-#>   tables(1): table [167780 obs x 313 var]
-#>   coordinate_systems: global
+sd  <- readSpatialData("xenium_breast.zarr")
+sce <- toSingleCellExperiment(sd)
+dim(sce)
+#> [1]    313 167780
+
+# Ready for Bioconductor
+library(scran); library(scater)
+sce <- computeSumFactors(sce)
+sce <- logNormCounts(sce)
 ```
 
 ---
@@ -77,70 +76,69 @@ sd
 
 <div align="center">
 <img src="man/figures/fig2_spatial_query.png"
-    width="700" alt="Spatial bounding-box query"/>
+    width="700" alt="Spatial query"/>
 </div>
 
-> **Fig. 2.** (**a**) Tissue overview with 1 x 1 mm ROI (white box).
-> (**b**) Zoomed ROI showing 721,846 transcripts across 3,707 cells.
-> Top 6 genes by frequency are coloured; remaining transcripts in
-> grey. ERBB2-positive tumour cells and LUM/POSTN-positive
-> cancer-associated fibroblasts occupy complementary spatial domains.
-> Scale bar: 200 um.
+> **Fig. 2.** (**a**) Full tissue with 1 x 1 mm ROI (white box).
+> (**b**) Zoomed ROI: top 6 genes coloured, ERBB2+ tumour cells
+> and LUM/POSTN+ cancer-associated fibroblasts in complementary
+> spatial domains. Scale bar: 200 um.
 
 ```r
-roi <- bboxQuery(sd,
-    xmin = 3200, xmax = 4200,
-    ymin = 2200, ymax = 3200)
+roi <- bboxQuery(spatialPoints(sd)[["transcripts"]],
+    xmin = 3200, xmax = 4200, ymin = 2200, ymax = 3200)
 ```
 
 ---
 
-## 3. Cell-type resolved gene expression across the tumour
+## 3. Spatial autocorrelation identifies tissue-patterned genes
 
 <div align="center">
-<img src="man/figures/fig3_aggregation.png"
-    width="700" alt="Cell-type resolved heatmap"/>
+<img src="man/figures/fig3_spatial_autocorrelation.png"
+    width="700" alt="Moran's I spatial autocorrelation"/>
 </div>
 
-> **Fig. 3.** Heatmap of 2,000 cells (stratified subsample of
-> 166,364) x 30 genes (top variable of 321). Cell types assigned by
-> canonical marker expression: EPCAM (epithelial), LUM/POSTN/SFRP4
-> (stromal), PTPRC (immune), PECAM1 (endothelial). Log-normalised,
-> column Z-scored (clipped at +/-2), hierarchically clustered
-> (Ward's D2). Left strip: cell type annotation.
+> **Fig. 3.** (**a**) Moran's I spatial autocorrelation across 313
+> genes (3,000 cells, k=15 neighbours). Top spatially variable genes
+> include CEACAM6 (I=0.36), FOXA1, GATA3, FASN, EPCAM — all known
+> breast cancer markers with spatially structured expression.
+> (**b**) Spatial map of CEACAM6 showing clear tumour-nest clustering.
+> \*\*\* p < 0.001 (BH-adjusted).
 
 ```r
-counts <- aggregatePoints(
-    spatialPoints(sd)[["transcripts"]],
-    shapes(sd)[["cell_circles"]],
-    feature_col = "feature_name", region_col = "cell_id")
-dim(counts)
-#> [1] 167780    322
+coords <- geometryCentroids(shapes(sd)[["cell_circles"]][["geometry"]])
+morans <- spatialAutocorrelation(
+    expr_mat = t(as.matrix(assay(sce, "counts"))),
+    coords   = coords,
+    k = 15L)
+head(morans[order(morans$p.value), ])
+#>       gene observed   p.value adjusted.p
+#>    CEACAM6    0.362  0.00e+00   0.00e+00
+#>      FOXA1    0.310 8.16e-213  1.28e-210
 ```
 
 ---
 
-## 4. Tumour microenvironment cell types from transcript aggregation
+## 4. Spatial differential expression between tumour and stroma
 
 <div align="center">
-<img src="man/figures/fig4_downstream.png"
-    width="700" alt="PCA and marker dot plot"/>
+<img src="man/figures/fig4_spatial_de.png"
+    width="700" alt="Spatial differential expression"/>
 </div>
 
-> **Fig. 4.** (**a**) PCA of log-normalised aggregated counts (2,000
-> cells, 30 genes) coloured by cell type with 68% confidence
-> ellipses. Four populations are clearly separated. (**b**) Dot plot
-> of top 16 cell-type-discriminating genes (log2 fold-change). Dot
-> size: fraction of cells with non-zero counts; colour: scaled mean
-> expression. Canonical markers confirmed: EPCAM/KRT8 (epithelial),
-> LUM/POSTN/PDGFRA (stromal), CD3E/PTPRC (immune),
-> VWF/PECAM1 (endothelial).
+> **Fig. 4.** (**a**) Volcano plot of Wilcoxon rank-sum test between
+> epithelial (EPCAM+) and stromal (LUM+/POSTN+) cells. Canonical
+> markers correctly separated: EPCAM, KRT7, GATA3, TACSTD2
+> (epithelial, right) vs LUM, POSTN, CCDC80, CXCL12 (stromal, left).
+> (**b**) Spatial distribution of four cell types showing
+> tumour-stroma compartmentalisation.
 
 ```r
-# Direct integration with Bioconductor
-library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays = list(counts = t(count_mat)))
-colData(sce)$cell_type <- cell_types
+de <- spatialDiffExpression(
+    expr_mat = count_matrix,
+    group1   = cell_type == "Epithelial",
+    group2   = cell_type == "Stromal")
+# 131 significant genes (|log2FC| > 1, adjusted p < 0.01)
 ```
 
 ---
@@ -153,39 +151,45 @@ colData(sce)$cell_type <- cell_types
 </div>
 
 > **Fig. 5.** (**a**) 10x Xenium human breast cancer (34.5M
-> transcripts, 167,780 cells, transcript density map). (**b**) Allen
-> Institute MERFISH mouse primary visual cortex (3.7M transcripts,
-> 2,389 cells, 268 genes, cortical layer annotation from spatial
-> metadata). Both datasets read with the same `readSpatialData()`
-> call — no platform-specific code, no Python dependency.
+> transcripts, 167,780 cells). (**b**) Allen Institute MERFISH mouse
+> primary visual cortex (3.7M transcripts, 2,389 cells), with
+> cortical layer polygons from `shapes/anatomical` and cell centroids
+> from `geometryCentroids()`. Both read with the same
+> `readSpatialData()` — no platform-specific code.
 
 ```r
-# Same API for any SpatialData Zarr store
 sd_xenium  <- readSpatialData("xenium_breast.zarr")
 sd_merfish <- readSpatialData("merfish_brain.zarr")
 
-# Identical downstream workflow
-pts_xen <- spatialPoints(sd_xenium)[["transcripts"]]
-pts_mer <- spatialPoints(sd_merfish)[["single_molecule"]]
+# spatialJoin assigns transcripts to anatomical regions
+layers <- spatialJoin(
+    spatialPoints(sd_merfish)[["single_molecule"]],
+    shapes(sd_merfish)[["anatomical"]],
+    region_names = c("I", "II/III", "IV", "V", "VI", "WM"))
 ```
 
 ---
 
-## Additional Functions
+## Key Features
 
-| Function | Description |
-|---|---|
-| `composeTransforms()` | Chain affine transforms (2D/3D) |
-| `invertTransform()` | Compute inverse transform |
-| `writeSpatialData()` | Write SpatialData Zarr stores |
-| `validateSpatialData()` | Spec compliance checker (14 criteria) |
-| `combineSpatialData()` | Multi-sample merge with auto-prefix |
-| `filterSample()` | Extract single sample |
-| `cropImage()` | Crop Zarr image by bounding box |
-| `readZarrDelayed()` | Out-of-memory `DelayedArray` access |
-| `assignToRegions()` | Nearest-neighbour point-to-region assignment |
-| `elementSummary()` | Element overview table |
-| `coordinateSystemElements()` | Map coordinate systems to elements |
+| Category | Function | Description |
+|---|---|---|
+| **I/O** | `readSpatialData()` | Read SpatialData Zarr v2/v3 stores |
+| | `writeSpatialData()` | Write SpatialData Zarr stores |
+| | `readParquetPoints()` | Read Parquet point tables |
+| **Bridge** | `toSingleCellExperiment()` | → SingleCellExperiment |
+| | `toSpatialExperiment()` | → SpatialExperiment with spatial coords |
+| | `toPointPattern()` | → spatstat ppp for point process analysis |
+| **Spatial** | `bboxQuery()` | Bounding-box spatial query |
+| | `spatialJoin()` | Point-in-polygon region assignment |
+| | `aggregatePoints()` | Transcript → cell × gene matrix |
+| | `parseGeometry()` | WKB geometry parsing |
+| **Statistics** | `spatialAutocorrelation()` | Moran's I (spatial clustering) |
+| | `spatialDiffExpression()` | DE between spatial regions |
+| **Transforms** | `composeTransforms()` | Chain affine transforms (2D/3D) |
+| | `invertTransform()` | Compute inverse transform |
+| **Validation** | `validateSpatialData()` | Spec compliance (14 criteria) |
+| **Multi-sample** | `combineSpatialData()` | Merge multiple stores |
 
 ---
 
@@ -196,10 +200,10 @@ if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
 remotes::install_github("CuiweiG/SpatialDataR")
 
-# Optional backends
-BiocManager::install("Rarr")                 # Zarr arrays
-install.packages("arrow")                    # Parquet
-BiocManager::install("SpatialExperiment")    # Table coercion
+# Optional (recommended)
+BiocManager::install(c("SingleCellExperiment",
+    "SpatialExperiment", "scran", "scater"))
+install.packages(c("arrow", "FNN", "spatstat.geom"))
 ```
 
 ## References
@@ -222,7 +226,7 @@ BiocManager::install("SpatialExperiment")    # Table coercion
    38:3128--3131.
    doi:[10.1093/bioinformatics/btac299](https://doi.org/10.1093/bioinformatics/btac299)
 
-5. Parker TJ et al. (2023). MoleculeExperiment enables consistent
-   infrastructure for molecule-resolved spatial omics. *Bioinformatics*
-   39:btad550.
-   doi:[10.1093/bioinformatics/btad550](https://doi.org/10.1093/bioinformatics/btad550)
+5. Moses L & Pachter L (2023). Voyager: exploratory single-cell
+   genomics data analysis with geospatial statistics. *Nat Methods*
+   20:1431--1441.
+   doi:[10.1038/s41592-023-01920-2](https://doi.org/10.1038/s41592-023-01920-2)

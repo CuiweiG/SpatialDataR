@@ -38,6 +38,8 @@ Suggests:
     arrow,
     terra,
     ggplot2,
+    FNN,
+    spatstat.geom,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
@@ -56,6 +58,7 @@ Collate:
     'AllGenerics.R'
     'SpatialDataR-package.R'
     'aggregate.R'
+    'coerce-bioc.R'
     'coerce.R'
     'delayed.R'
     'geometry.R'
@@ -67,6 +70,7 @@ Collate:
     'read-zarr.R'
     'spatial-join.R'
     'spatial-query.R'
+    'spatial-stats.R'
     'transforms.R'
     'validate.R'
     'write-zarr.R'
