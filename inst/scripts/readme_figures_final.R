@@ -170,45 +170,48 @@ pts_roi <- as.data.frame(bboxQuery(
     qx[1], qx[2], qy[1], qy[2]))
 n_in <- nrow(pts_roi)
 
-set.seed(42)
-pts_s2 <- pts[sample(nrow(pts), 100000), ]
-pts_s2$gene_top <- factor(ifelse(pts_s2$gene %in% top6, pts_s2$gene, "Other"),
-                           levels = c(top6, "Other"))
+## Panel a: rasterized transcript density with ROI box
+bin2 <- 12
+pts$xb2 <- round(pts$x / bin2) * bin2
+pts$yb2 <- round(pts$y / bin2) * bin2
+density_all <- aggregate(gene ~ xb2 + yb2, data = pts, FUN = length)
+colnames(density_all)[3] <- "count"
 
-pts_roi_sub <- pts_roi[sample(nrow(pts_roi), min(15000, nrow(pts_roi))), ]
-pts_roi_sub$gene_top <- factor(
-    ifelse(pts_roi_sub$gene %in% top6, pts_roi_sub$gene, "Other"),
-    levels = c(top6, "Other"))
-
-## Plot Other first (underneath), then top genes on top
-## Sort so Other is plotted first, coloured genes on top
-pts_s2 <- pts_s2[order(pts_s2$gene_top == "Other", decreasing = TRUE), ]
-
-p2a <- ggplot(pts_s2, aes(x = x, y = y, colour = gene_top)) +
-    geom_point(size = 0.04, alpha = 0.45, stroke = 0) +
-    scale_colour_manual(values = gene_cols, guide = "none") +
+p2a <- ggplot(density_all, aes(x = xb2, y = yb2, fill = count)) +
+    geom_raster() +
+    scale_fill_viridis_c(option = "mako", trans = "sqrt",
+                          name = "Transcripts", direction = -1) +
     annotate("rect", xmin = qx[1], xmax = qx[2],
              ymin = qy[1], ymax = qy[2],
-             fill = NA, colour = "#D55E00", linewidth = 0.9,
-             linetype = "dashed") +
-    coord_equal() + th() +
+             fill = NA, colour = "#FF4500", linewidth = 1.2) +
+    coord_equal(expand = FALSE) + th() +
     labs(x = expression("x ("*mu*"m)"), y = expression("y ("*mu*"m)"))
 
-p2b <- ggplot(pts_roi_sub, aes(x = x, y = y, colour = gene_top)) +
-    geom_point(size = 0.5, alpha = 0.7, stroke = 0) +
-    scale_colour_manual(values = gene_cols, name = "Gene") +
+## Panel b: zoomed ROI — rasterize by dominant gene
+bin_roi <- 5
+pts_roi$xbr <- round(pts_roi$x / bin_roi) * bin_roi
+pts_roi$ybr <- round(pts_roi$y / bin_roi) * bin_roi
+roi_gene <- aggregate(gene ~ xbr + ybr, data = pts_roi,
+                       FUN = function(x) {
+                           tt <- table(x)
+                           names(tt)[which.max(tt)]
+                       })
+roi_gene$gene_top <- ifelse(roi_gene$gene %in% top6, roi_gene$gene, "Other")
+roi_gene$gene_top <- factor(roi_gene$gene_top, levels = c(top6, "Other"))
+
+p2b <- ggplot(roi_gene, aes(x = xbr, y = ybr, fill = gene_top)) +
+    geom_raster() +
+    scale_fill_manual(values = gene_cols, name = "Dominant\ngene") +
     coord_equal(xlim = qx, ylim = qy, expand = FALSE) +
     annotate("segment", x = qx[2] - 120, xend = qx[2] - 20,
              y = qy[1] + 15, yend = qy[1] + 15,
-             linewidth = 1.1, colour = "black") +
+             linewidth = 1.2, colour = "black") +
     annotate("text", x = qx[2] - 70, y = qy[1] + 15,
-             label = "100 \u00B5m", vjust = -0.7, size = 2.3,
+             label = "100 \u00B5m", vjust = -0.7, size = 2.5,
              fontface = "bold") +
-    guides(colour = guide_legend(
-        override.aes = list(size = 2.5, alpha = 1))) +
     th() + labs(x = expression("x ("*mu*"m)"), y = NULL) +
-    theme(panel.border = element_rect(colour = "#D55E00",
-                                       linewidth = 0.8, fill = NA),
+    theme(panel.border = element_rect(colour = "#FF4500",
+                                       linewidth = 1, fill = NA),
           axis.text.y = element_blank(), axis.ticks.y = element_blank(),
           axis.line.y = element_blank())
 
@@ -417,30 +420,49 @@ verify_pts <- as.data.frame(spatialPoints(sd2)[["transcripts"]])
 n_verify <- nrow(verify_pts)
 cat("  Written:", n_sub, " Read back:", n_verify, " Match:", n_sub == n_verify, "\n")
 
-set.seed(42)
-pts_s5 <- pts[sample(nrow(pts), 100000), ]
-sub_plot <- sub_pts[sample(nrow(sub_pts), min(40000, nrow(sub_pts))), ]
-sub_plot$gene_top <- ifelse(sub_plot$gene %in% top6, sub_plot$gene, "Other")
-ver_plot <- verify_pts[sample(nrow(verify_pts), min(40000, nrow(verify_pts))), ]
-ver_plot$gene_top <- ifelse(ver_plot$gene %in% top6, ver_plot$gene, "Other")
+## Panel a: rasterized density (same style as fig2a)
+bin5 <- 12
+pts$xb5 <- round(pts$x / bin5) * bin5
+pts$yb5 <- round(pts$y / bin5) * bin5
+dens5 <- aggregate(gene ~ xb5 + yb5, data = pts, FUN = length)
+colnames(dens5)[3] <- "count"
 
-p5a <- ggplot(pts_s5, aes(x = x, y = y)) +
-    geom_point(size = 0.03, alpha = 0.35, colour = "grey30") +
+p5a <- ggplot(dens5, aes(x = xb5, y = yb5, fill = count)) +
+    geom_raster() +
+    scale_fill_viridis_c(option = "mako", trans = "sqrt",
+                          guide = "none", direction = -1) +
     annotate("rect", xmin = qx5[1], xmax = qx5[2],
              ymin = qy5[1], ymax = qy5[2],
-             fill = NA, colour = "#0072B2", linewidth = 0.8,
-             linetype = "dashed") +
-    coord_equal() + th(9) +
+             fill = NA, colour = "#0072B2", linewidth = 1) +
+    coord_equal(expand = FALSE) + th(9) +
     labs(title = "readSpatialData()",
          subtitle = paste0(format(nrow(pts), big.mark = ","), " transcripts"),
          x = expression("x ("*mu*"m)"), y = expression("y ("*mu*"m)"))
 
-sub_plot$gene_top <- factor(sub_plot$gene_top, levels = c("Other", top6))
-sub_plot <- sub_plot[order(sub_plot$gene_top), ]
-p5b <- ggplot(sub_plot, aes(x = x, y = y, colour = gene_top)) +
-    geom_point(size = 0.12, alpha = 0.55, stroke = 0) +
-    scale_colour_manual(values = gene_cols, guide = "none") +
-    coord_equal(xlim = qx5, ylim = qy5) + th(9) +
+## Panels b,c: rasterized ROI by dominant gene
+bin5r <- 5
+sub_pts$xbr5 <- round(sub_pts$x / bin5r) * bin5r
+sub_pts$ybr5 <- round(sub_pts$y / bin5r) * bin5r
+sub_gene <- aggregate(gene ~ xbr5 + ybr5, data = sub_pts,
+                       FUN = function(x) {
+                           tt <- table(x); names(tt)[which.max(tt)]
+                       })
+sub_gene$gene_top <- ifelse(sub_gene$gene %in% top6, sub_gene$gene, "Other")
+sub_gene$gene_top <- factor(sub_gene$gene_top, levels = c(top6, "Other"))
+
+verify_pts$xbr5 <- round(verify_pts$x / bin5r) * bin5r
+verify_pts$ybr5 <- round(verify_pts$y / bin5r) * bin5r
+ver_gene <- aggregate(gene ~ xbr5 + ybr5, data = verify_pts,
+                       FUN = function(x) {
+                           tt <- table(x); names(tt)[which.max(tt)]
+                       })
+ver_gene$gene_top <- ifelse(ver_gene$gene %in% top6, ver_gene$gene, "Other")
+ver_gene$gene_top <- factor(ver_gene$gene_top, levels = c(top6, "Other"))
+
+p5b <- ggplot(sub_gene, aes(x = xbr5, y = ybr5, fill = gene_top)) +
+    geom_raster() +
+    scale_fill_manual(values = gene_cols, guide = "none") +
+    coord_equal(xlim = qx5, ylim = qy5, expand = FALSE) + th(9) +
     labs(title = "bboxQuery() + writeSpatialData()",
          subtitle = paste0(format(n_sub, big.mark = ","),
                            " in 600\u00D7600 \u00B5m ROI"),
@@ -450,12 +472,10 @@ p5b <- ggplot(sub_plot, aes(x = x, y = y, colour = gene_top)) +
           axis.text.y = element_blank(), axis.ticks.y = element_blank(),
           axis.line.y = element_blank())
 
-ver_plot$gene_top <- factor(ver_plot$gene_top, levels = c("Other", top6))
-ver_plot <- ver_plot[order(ver_plot$gene_top), ]
-p5c <- ggplot(ver_plot, aes(x = x, y = y, colour = gene_top)) +
-    geom_point(size = 0.12, alpha = 0.55, stroke = 0) +
-    scale_colour_manual(values = gene_cols, guide = "none") +
-    coord_equal(xlim = qx5, ylim = qy5) + th(9) +
+p5c <- ggplot(ver_gene, aes(x = xbr5, y = ybr5, fill = gene_top)) +
+    geom_raster() +
+    scale_fill_manual(values = gene_cols, guide = "none") +
+    coord_equal(xlim = qx5, ylim = qy5, expand = FALSE) + th(9) +
     labs(title = "readSpatialData() [verify]",
          subtitle = paste0(format(n_verify, big.mark = ","),
                            " preserved"),
