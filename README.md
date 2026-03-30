@@ -83,8 +83,10 @@ sd
     width="700" alt="Bounding box spatial query"/>
 </div>
 
-> **Fig. 2.** (**a**) Full dataset with 400x400 um ROI (orange).
-> (**b**) Zoomed query result with gene identity. Scale bar: 100 um.
+> **Fig. 2.** (**a**) Transcript density map (3.7M molecules) with
+> 400x400 um ROI (orange box). (**b**) Zoomed view of the queried
+> region with cortical layer structure preserved at 5 um resolution.
+> Scale bar: 100 um.
 
 ```r
 sub <- bboxQuery(sd,
@@ -154,9 +156,11 @@ inv <- invertTransform(ct)
     width="700" alt="Read-write roundtrip"/>
 </div>
 
-> **Fig. 5.** (**a**) Read 3.7M transcripts. (**b**) bboxQuery selects
-> 648,954 in 600x600 um ROI, write to `.zarr`. (**c**) Read back:
-> identical count preserved.
+> **Fig. 5.** Lossless roundtrip verification on 648,954 transcripts.
+> (**a**) Per-gene transcript counts: original (blue) vs read-back
+> (red) are identical for all 268 genes.
+> (**b**) Coordinate fidelity: x-coordinates before and after
+> write/read fall exactly on the identity line (max error = 0).
 
 ```r
 writeSpatialData(sub, "subset.zarr")

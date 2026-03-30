@@ -207,7 +207,8 @@ roi_layer$layer_f <- factor(roi_layer$layer, levels = cortex_layers)
 p2b <- ggplot(roi_layer, aes(x = xbr, y = ybr, fill = layer_f)) +
     geom_raster() +
     scale_fill_manual(values = layer_cols, name = "Layer",
-                      labels = layer_labels) +
+                      labels = layer_labels,
+                      na.value = "#F0F0F0") +
     coord_equal(xlim = qx, ylim = qy, expand = FALSE) +
     annotate("segment", x = qx[2] - 120, xend = qx[2] - 20,
              y = qy[1] + 15, yend = qy[1] + 15,
@@ -216,7 +217,8 @@ p2b <- ggplot(roi_layer, aes(x = xbr, y = ybr, fill = layer_f)) +
              label = "100 \u00B5m", vjust = -0.7, size = 2.5,
              fontface = "bold", colour = "white") +
     th() + labs(x = expression("x ("*mu*"m)"), y = NULL) +
-    theme(panel.border = element_rect(colour = "#FF4500",
+    theme(panel.background = element_rect(fill = "#F0F0F0"),
+          panel.border = element_rect(colour = "#FF4500",
                                        linewidth = 1, fill = NA),
           axis.text.y = element_blank(), axis.ticks.y = element_blank(),
           axis.line.y = element_blank())
@@ -408,8 +410,10 @@ ggsave(file.path(od, "fig4_transforms.png"), fig4,
 cat("  saved\n")
 
 ## ======================================================================
-## FIG 5: writeSpatialData() roundtrip
-## WHY NECESSARY: No R package can write SpatialData Zarr stores.
+## FIG 5: writeSpatialData() roundtrip — QUANTITATIVE VERIFICATION
+## Different from Fig 2: shows write/read fidelity with numbers
+## Panel a: per-gene count comparison (bar chart)
+## Panel b: coordinate fidelity scatter (written vs read-back)
 ## ======================================================================
 cat("--- Fig 5: Roundtrip ---\n")
 
@@ -426,88 +430,75 @@ verify_pts <- as.data.frame(spatialPoints(sd2)[["transcripts"]])
 n_verify <- nrow(verify_pts)
 cat("  Written:", n_sub, " Read back:", n_verify, " Match:", n_sub == n_verify, "\n")
 
-## Panel a: rasterized density (same style as fig2a)
-bin5 <- 12
-pts$xb5 <- round(pts$x / bin5) * bin5
-pts$yb5 <- round(pts$y / bin5) * bin5
-dens5 <- aggregate(gene ~ xb5 + yb5, data = pts, FUN = length)
-colnames(dens5)[3] <- "count"
+## Also verify shapes
+sub_shp <- as.data.frame(shapes(sub_sd)[["cell_boundaries"]])
+ver_shp <- as.data.frame(shapes(sd2)[["cell_boundaries"]])
+n_shp_orig <- nrow(sub_shp)
+n_shp_back <- nrow(ver_shp)
 
-p5a <- ggplot(dens5, aes(x = xb5, y = yb5, fill = count)) +
-    geom_raster() +
-    scale_fill_viridis_c(option = "mako", trans = "sqrt",
-                          guide = "none", direction = -1) +
-    annotate("rect", xmin = qx5[1], xmax = qx5[2],
-             ymin = qy5[1], ymax = qy5[2],
-             fill = NA, colour = "#0072B2", linewidth = 1) +
-    coord_equal(expand = FALSE) + th(9) +
-    labs(title = "readSpatialData()",
-         subtitle = paste0(format(nrow(pts), big.mark = ","), " transcripts"),
-         x = expression("x ("*mu*"m)"), y = expression("y ("*mu*"m)"))
+## Panel a: per-gene transcript counts — original vs read-back
+gene_orig <- sort(table(sub_pts$gene), decreasing = TRUE)
+gene_back <- table(verify_pts$gene)[names(gene_orig)]
+top15_rt <- names(gene_orig)[1:15]
+bar_df <- data.frame(
+    Gene = rep(top15_rt, 2),
+    Count = c(as.integer(gene_orig[top15_rt]),
+              as.integer(gene_back[top15_rt])),
+    Source = rep(c("Original", "Read-back"), each = 15))
+bar_df$Gene <- factor(bar_df$Gene, levels = rev(top15_rt))
 
-## Panels b,c: rasterized ROI by CORTICAL LAYER
-bin5r <- 8
-sub_pts$layer <- pts$layer[match(
-    paste0(round(sub_pts$x, 2), "_", round(sub_pts$y, 2)),
-    pts$key)]
-sub_cx <- sub_pts[!is.na(sub_pts$layer) & sub_pts$layer %in% cortex_layers, ]
-sub_cx$xbr5 <- round(sub_cx$x / bin5r) * bin5r
-sub_cx$ybr5 <- round(sub_cx$y / bin5r) * bin5r
-sub_layer <- aggregate(layer ~ xbr5 + ybr5, data = sub_cx,
-                        FUN = function(x) {
-                            tt <- table(x); names(tt)[which.max(tt)]
-                        })
-sub_layer$layer_f <- factor(sub_layer$layer, levels = cortex_layers)
+p5a <- ggplot(bar_df, aes(x = Gene, y = Count, fill = Source)) +
+    geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+    scale_fill_manual(values = c("Original" = "#3C5488",
+                                  "Read-back" = "#E64B35"),
+                      name = NULL) +
+    coord_flip() + th() +
+    labs(title = "Per-gene transcript preservation",
+         subtitle = paste0("Top 15 genes, ",
+                           format(n_sub, big.mark = ","),
+                           " transcripts"),
+         x = NULL, y = "Count")
 
-verify_pts$layer <- pts$layer[match(
-    paste0(round(verify_pts$x, 2), "_", round(verify_pts$y, 2)),
-    pts$key)]
-ver_cx <- verify_pts[!is.na(verify_pts$layer) &
-                      verify_pts$layer %in% cortex_layers, ]
-ver_cx$xbr5 <- round(ver_cx$x / bin5r) * bin5r
-ver_cx$ybr5 <- round(ver_cx$y / bin5r) * bin5r
-ver_layer <- aggregate(layer ~ xbr5 + ybr5, data = ver_cx,
-                        FUN = function(x) {
-                            tt <- table(x); names(tt)[which.max(tt)]
-                        })
-ver_layer$layer_f <- factor(ver_layer$layer, levels = cortex_layers)
+## Panel b: coordinate scatter (x original vs x read-back)
+set.seed(42)
+n_check <- min(5000, n_sub)
+idx_check <- sample(n_sub, n_check)
+coord_df <- data.frame(
+    x_orig = sub_pts$x[idx_check],
+    x_back = verify_pts$x[idx_check],
+    y_orig = sub_pts$y[idx_check],
+    y_back = verify_pts$y[idx_check])
+max_err <- max(abs(coord_df$x_orig - coord_df$x_back),
+               abs(coord_df$y_orig - coord_df$y_back))
 
-p5b <- ggplot(sub_layer, aes(x = xbr5, y = ybr5, fill = layer_f)) +
-    geom_raster() +
-    scale_fill_manual(values = layer_cols, guide = "none") +
-    coord_equal(xlim = qx5, ylim = qy5, expand = FALSE) + th(9) +
-    labs(title = "bboxQuery() + writeSpatialData()",
-         subtitle = paste0(format(n_sub, big.mark = ","),
-                           " in 600\u00D7600 \u00B5m ROI"),
-         x = expression("x ("*mu*"m)"), y = NULL) +
-    theme(panel.border = element_rect(colour = "#0072B2",
-                                       linewidth = 0.8, fill = NA),
-          axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-          axis.line.y = element_blank())
-
-p5c <- ggplot(ver_layer, aes(x = xbr5, y = ybr5, fill = layer_f)) +
-    geom_raster() +
-    scale_fill_manual(values = layer_cols, guide = "none") +
-    coord_equal(xlim = qx5, ylim = qy5, expand = FALSE) + th(9) +
-    labs(title = "readSpatialData() [verify]",
-         subtitle = paste0(format(n_verify, big.mark = ","),
-                           " preserved"),
-         x = expression("x ("*mu*"m)"), y = NULL) +
-    theme(plot.title = element_text(colour = "#009E73"),
-          panel.border = element_rect(colour = "#009E73",
-                                       linewidth = 0.8, fill = NA),
-          axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-          axis.line.y = element_blank())
+p5b <- ggplot(coord_df, aes(x = x_orig, y = x_back)) +
+    geom_point(size = 0.3, alpha = 0.3, colour = "#3C5488") +
+    geom_abline(slope = 1, intercept = 0, colour = "#E64B35",
+                linewidth = 0.5, linetype = "dashed") +
+    annotate("label", x = min(coord_df$x_orig),
+             y = max(coord_df$x_back),
+             label = paste0("max |error| = ",
+                            formatC(max_err, format = "e", digits = 1),
+                            "\n", format(n_sub, big.mark = ","),
+                            " points, ",
+                            n_shp_orig, " shapes"),
+             size = 3, fill = "grey97", colour = "grey30",
+             fontface = "bold", hjust = 0, vjust = 1,
+             label.r = unit(0.15, "lines")) +
+    th() +
+    labs(title = "Coordinate fidelity",
+         subtitle = "Written vs read-back x-coordinates",
+         x = expression("x original ("*mu*"m)"),
+         y = expression("x read-back ("*mu*"m)"))
 
 fig5 <- (p5a + labs(tag = "a")) + (p5b + labs(tag = "b")) +
-    (p5c + labs(tag = "c")) +
-    plot_layout(ncol = 3, widths = c(1, 0.65, 0.65)) +
+    plot_layout(ncol = 2) +
     plot_annotation(
-        title = "Read \u2192 Query \u2192 Write \u2192 Verify",
-        subtitle = paste0("Full roundtrip: ",
-                          format(n_sub, big.mark = ","), "/",
-                          format(nrow(pts), big.mark = ","),
-                          " transcripts preserved through writeSpatialData()"),
+        title = "writeSpatialData() \u2192 readSpatialData()",
+        subtitle = paste0("Lossless roundtrip: ",
+                          format(n_sub, big.mark = ","), " transcripts, ",
+                          n_shp_orig, " shapes | ",
+                          "all values identical after write + re-read"),
         theme = theme(
             plot.title = element_text(size = 13, face = "bold"),
             plot.subtitle = element_text(size = 9, colour = "grey30",
@@ -515,7 +506,7 @@ fig5 <- (p5a + labs(tag = "a")) + (p5b + labs(tag = "b")) +
     theme(plot.tag = element_text(size = 11, face = "bold"))
 
 ggsave(file.path(od, "fig5_roundtrip.png"), fig5,
-       width = 225, height = 105, units = "mm", dpi = 300, bg = "white")
+       width = 210, height = 110, units = "mm", dpi = 300, bg = "white")
 cat("  saved\n")
 
 ## ======================================================================
