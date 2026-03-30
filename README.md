@@ -152,10 +152,11 @@ de <- spatialDiffExpression(
 
 > **Fig. 5.** (**a**) 10x Xenium human breast cancer (34.5M
 > transcripts, 167,780 cells). (**b**) Allen Institute MERFISH mouse
-> primary visual cortex (3.7M transcripts, 2,389 cells), with
-> cortical layer polygons from `shapes/anatomical` and cell centroids
-> from `geometryCentroids()`. Both read with the same
-> `readSpatialData()` — no platform-specific code.
+> primary visual cortex (2,389 cells, 268 genes): cortical layer
+> polygons from `shapes/anatomical` overlaid with single-cell Rorb
+> expression (Layer IV marker) from `toSingleCellExperiment()`.
+> Bright cells cluster in Layer IV as expected. Both datasets read
+> with the same `readSpatialData()` — no platform-specific code.
 
 ```r
 sd_xenium  <- readSpatialData("xenium_breast.zarr")
