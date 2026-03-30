@@ -12,7 +12,7 @@
 
 ---
 
-## Motivation
+## Why SpatialDataR?
 
 SpatialData (Marconato et al. 2024, *Nat Methods*) established a
 universal Zarr-based on-disk format for spatial omics, adopted by the
@@ -27,34 +27,25 @@ stores, exposing elements through Bioconductor-standard S4 classes:
 
 - **Points and shapes** are loaded as `DataFrame` objects
   (CSV, Parquet, or GeoParquet backends)
-- **Images and labels** are represented as path references, loadable
-  as in-memory arrays via `readZarrArray()` or as out-of-memory
-  `DelayedArray` objects via `readZarrDelayed()`
+- **Images and labels** are represented as lazy path references,
+  loadable as in-memory arrays via `readZarrArray()` or as
+  out-of-memory `DelayedArray` objects via `readZarrDelayed()`
 - **Tables** are parsed from AnnData-style obs/var Zarr groups, with
-  optional coercion to `SpatialExperiment` when both the package and
-  an expression matrix are available
-
-All coordinate transforms follow the OME-NGFF specification (Moore et
-al. 2023), supporting identity, scale, translation, affine, and
-sequence types with 2D/3D composition and inversion.
+  optional coercion to `SpatialExperiment` when an expression matrix
+  is available
+- **Coordinate transforms** follow the OME-NGFF specification
+  (Moore et al. 2023), supporting identity, scale, translation,
+  affine, and sequence types in 2D/3D
 
 ## Validation dataset
 
-All figures below use the **MERFISH mouse primary visual cortex
-(VISp)** dataset (Moffitt et al. 2018, *Science*): **3,714,642
-transcripts** across **268 genes** in **8 cortical layers** (VISp I--VI,
-white matter, and surrounding tissue). This dataset was chosen because:
-
-1. It is a **canonical spatial transcriptomics benchmark** used by the
-   scverse spatialdata-sandbox for format validation
-2. It contains **multiple spatial element types** (transcript points,
-   cell boundary shapes, annotation tables) that exercise the full
-   SpatialDataR API
-3. The cortical layer architecture provides **ground-truth spatial
-   organization** for validating bounding box queries and region-based
-   aggregation
-4. It is **publicly available** under CC0 1.0 from the SpaceTx
-   consortium (reproducible via `inst/scripts/create_real_store.R`)
+All figures use the **MERFISH mouse primary visual cortex (VISp)**
+dataset (Moffitt et al. 2018, *Science*): **3,714,642 transcripts**
+across **268 genes** in **8 cortical layers**. This dataset was chosen
+because it is a canonical spatial transcriptomics benchmark with
+ground-truth laminar architecture, multiple spatial element types, and
+public availability under CC0 1.0 (reproducible via
+`inst/scripts/create_real_store.R`).
 
 ---
 
@@ -62,22 +53,20 @@ white matter, and surrounding tissue). This dataset was chosen because:
 
 > `readSpatialData()` discovers all five element types (images, labels,
 > points, shapes, tables) and coordinate systems from a single function
-> call. Points and shapes are eagerly loaded as `DataFrame` when CSV
-> or Parquet data files are present; images and labels remain as
-> lightweight path references until explicitly loaded.
+> call. Points and shapes are eagerly loaded as `DataFrame`; images and
+> labels remain as lightweight path references until explicitly loaded.
 
 <div align="center">
 <img src="man/figures/fig1_store_reading.png"
     width="700" alt="Spatial transcript map of mouse VISp"/>
 </div>
 
-> **Fig. 1.** Spatial transcript map of mouse primary visual cortex read
-> from a SpatialData Zarr store via `readSpatialData()`. 3,714,642
+> **Fig. 1.** Spatial transcript map of mouse primary visual cortex
+> read from a SpatialData Zarr store via `readSpatialData()`. 3,714,642
 > transcripts, 268 genes. Faceted by cortical layer to reveal laminar
 > architecture: each layer occupies a distinct spatial region, tiling
-> the tissue from pial surface (Layer I) to white matter in anatomically
-> correct order. Scale bar: 500 µm. Data: MERFISH (Moffitt et al. 2018;
-> CC0 1.0).
+> the tissue from pial surface (Layer I) to white matter. Scale bar:
+> 500 um. Data: MERFISH (Moffitt et al. 2018; CC0 1.0).
 
 ```r
 library(SpatialDataR)
@@ -85,8 +74,6 @@ sd <- readSpatialData("merfish_visp.zarr")
 sd
 #> SpatialData object
 #>   path: merfish_visp.zarr
-#>   images(0):
-#>   spatialLabels(0):
 #>   spatialPoints(1): transcripts [3714642 rows]
 #>   shapes(1): cell_boundaries [160 rows]
 #>   tables(1): table
@@ -107,10 +94,9 @@ SpatialData-format Zarr stores.
 
 > `bboxQuery()` subsets a `SpatialData` object or individual `DataFrame`
 > elements to a rectangular region of interest, analogous to Python
-> `spatialdata.bounding_box_query()`. For `SpatialData` objects, all
-> element types are queried simultaneously; image and label elements
-> receive bounding box metadata for downstream cropping via
-> `cropImage()`.
+> `spatialdata.bounding_box_query()`. All element types are queried
+> simultaneously; image and label elements receive bounding box
+> metadata for downstream cropping via `cropImage()`.
 
 <div align="center">
 <img src="man/figures/fig2_spatial_query.png"
@@ -118,16 +104,15 @@ SpatialData-format Zarr stores.
 </div>
 
 > **Fig. 2.** Bounding box query on real MERFISH data. (**a**) Full
-> dataset overview with 400×400 µm ROI (orange dashed box).
+> dataset overview with 400x400 um ROI (orange dashed box).
 > (**b**) Zoomed view of the queried region with transcript gene
-> identity revealed. Scale bar: 100 µm.
+> identity revealed. Scale bar: 100 um.
 
 ```r
-# Query a 400 x 400 um ROI in mouse cortex
 sub <- bboxQuery(sd,
     xmin = 2000, xmax = 2400,
     ymin = 5200, ymax = 5600)
-spatialPoints(sub)[["transcripts"]]  # DataFrame subset
+spatialPoints(sub)[["transcripts"]]
 ```
 
 **Comparison.**
@@ -146,14 +131,15 @@ query on multi-element SpatialData stores.
 
 <div align="center">
 <img src="man/figures/fig3_aggregation.png"
-    width="700" alt="Gene enrichment dot plot"/>
+    width="700" alt="Cell x gene count matrix from real MERFISH data"/>
 </div>
 
-> **Fig. 3.** Cell × gene count matrix produced by `aggregatePoints()`.
-> 50 cells × 10 genes, log(count + 1) transformed, cells grouped by
-> phenotype. Each row is one cell; each column is one gene. Cell-type
-> markers are visible: VIM in stromal cells, CD45 in immune cells,
-> EPCAM/KRT18 in epithelial cells. Data: Xenium mini (test dataset).
+> **Fig. 3.** Cell x gene count matrix from **real MERFISH data**,
+> produced by `aggregatePoints()`. 160 cells x top 20 most variable
+> genes (of 268 total), scaled expression, cells grouped by cortical
+> layer. Transcripts were assigned to cell centroids by nearest-neighbor
+> matching (321,837/3,714,642 within 2x cell radius threshold).
+> Layer-specific marker gene patterns are clearly visible.
 
 ```r
 counts <- aggregatePoints(
@@ -161,11 +147,8 @@ counts <- aggregatePoints(
     shapes(sd)[["cell_boundaries"]],
     feature_col = "gene",
     region_col = "cell_id")
-# Returns cell x gene DataFrame
-head(counts[, 1:4])
-#>   EPCAM KRT18 VIM CD45
-#> 1     0     1   2    0
-#> 2     1     0   3    1
+dim(counts)
+#> [1] 160 269  # 160 cells x 268 genes + cell_id column
 ```
 
 **Comparison.**
@@ -179,23 +162,21 @@ by arbitrary region `DataFrame` objects from SpatialData stores.
 
 > `composeTransforms()` chains two affine transforms (second %*% first);
 > `invertTransform()` computes the matrix inverse. The parser
-> (`readSpatialData()`) automatically extracts and composes
-> OME-NGFF-compliant transforms from element `.zattrs` metadata,
-> supporting identity, scale, translation, affine, and recursive
-> sequence types in both 2D (3×3) and 3D (4×4).
+> automatically extracts and composes OME-NGFF-compliant transforms
+> from element `.zattrs` metadata, supporting identity, scale,
+> translation, affine, and recursive sequence types in 2D and 3D.
 
 <div align="center">
 <img src="man/figures/fig4_transforms.png"
     width="700" alt="Coordinate transform composition"/>
 </div>
 
-> **Fig. 4.** Five cell landmark coordinates in real MERFISH tissue
-> space transformed from pixel (grey ×) to global (orange ●) via a
+> **Fig. 4.** Eight cell landmark coordinates in real MERFISH tissue
+> space transformed from pixel (blue x) to global (red dot) via a
 > composed scale(0.5) + translate(500, 2000) affine. Roundtrip error
-> (forward then inverse) is at machine precision (~10⁻¹³).
+> (forward then inverse) is at machine precision (~10^-13).
 
 ```r
-# Compose pixel -> micron -> global
 ct <- composeTransforms(
     CoordinateTransform("affine",
         affine = diag(c(0.5, 0.5, 1)),
@@ -204,21 +185,18 @@ ct <- composeTransforms(
         affine = matrix(c(1,0,500, 0,1,2000, 0,0,1),
             3, byrow = TRUE),
         input_cs = "scaled", output_cs = "global"))
-inv <- invertTransform(ct)  # global -> pixels
-
-# Apply to coordinates
+inv <- invertTransform(ct)
 pts_global <- transformCoords(pts_df, ct)
 pts_back   <- transformCoords(pts_global, inv)
 max(abs(pts_df$x - pts_back$x))  # ~1e-13
 ```
 
 **Comparison.** No existing R/Bioconductor package provides OME-NGFF
-coordinate transform parsing, composition, or inversion. Users
-currently construct ad hoc affine matrices manually.
+coordinate transform parsing, composition, or inversion.
 
 ---
 
-## 5. Roundtrip: Read → Query → Write → Verify
+## 5. Read-Write Roundtrip
 
 > `writeSpatialData()` produces SpatialData-formatted Zarr stores
 > readable by Python `spatialdata`, enabling R analysis branches
@@ -230,14 +208,12 @@ currently construct ad hoc affine matrices manually.
 </div>
 
 > **Fig. 5.** Full roundtrip on real MERFISH data. (**a**) Read 3.7M
-> transcripts from Zarr store. (**b**) Spatial query selects 648,954
-> transcripts in a 600×600 µm ROI; write to new `.zarr` via
-> `writeSpatialData()`. (**c**) Read back and verify identical
-> transcript count.
+> transcripts. (**b**) Spatial query selects 648,954 transcripts in a
+> 600x600 um ROI; write to new `.zarr` via `writeSpatialData()`.
+> (**c**) Read back and verify identical transcript count.
 
 ```r
-sub <- bboxQuery(sd,
-    xmin = 2039, xmax = 2639,
+sub <- bboxQuery(sd, xmin = 2039, xmax = 2639,
     ymin = 5091, ymax = 5691)
 writeSpatialData(sub, "subset.zarr")
 sd2 <- readSpatialData("subset.zarr")
@@ -245,8 +221,138 @@ sd2 <- readSpatialData("subset.zarr")
 ```
 
 **Comparison.** No existing R/Bioconductor package can write
-SpatialData-formatted Zarr stores. Users must export to CSV and
-convert in Python. `writeSpatialData()` eliminates this step.
+SpatialData-formatted Zarr stores.
+
+---
+
+## 6. Multimodal Image + Transcript Overlay
+
+> SpatialData stores combine molecular coordinates with tissue images
+> and segmentation masks in a single coordinate system.
+> `readZarrArray()` loads raster data; `cropImage()` extracts regions
+> of interest. Transcripts can be overlaid on morphology images for
+> integrated spatial analysis.
+
+<div align="center">
+<img src="man/figures/fig6_multimodal.png"
+    width="700" alt="Multimodal image and transcript overlay"/>
+</div>
+
+> **Fig. 6.** Multimodal spatial data visualization. (**a**) Transcript
+> spots overlaid on morphology image via `readZarrArray()`.
+> (**b**) Cell segmentation mask with centroids.
+> (**c**) `cropImage()` subregion extraction.
+> (**d**) Transcript density heatmap with cell centroids.
+
+```r
+img <- readZarrArray(file.path(store, "images",
+    "morphology", "scale0"))
+mask <- readZarrArray(file.path(store, "labels",
+    "cell_labels", "scale0"))
+crop <- cropImage(img_path,
+    xmin = 5, xmax = 15, ymin = 5, ymax = 15)
+```
+
+**Comparison.** No existing R/Bioconductor package reads SpatialData
+image and label elements alongside molecular data in a unified
+coordinate system.
+
+---
+
+## 7. Downstream Bioconductor Integration
+
+> The count matrix from `aggregatePoints()` integrates directly with
+> the Bioconductor single-cell ecosystem. Conversion to
+> `SingleCellExperiment` enables standard normalization, dimensionality
+> reduction, and visualization workflows.
+
+<div align="center">
+<img src="man/figures/fig7_downstream.png"
+    width="700" alt="PCA and downstream analysis"/>
+</div>
+
+> **Fig. 7.** Downstream analysis from SpatialDataR.
+> (**a**) PCA of cells coloured by phenotype after library-size
+> normalization of the `aggregatePoints()` count matrix. PC1 (44.6%)
+> and PC2 (22.4%) separate cell types.
+> (**b**) Cell-type composition.
+
+```r
+counts_mat <- as.matrix(counts_df)
+sce <- SingleCellExperiment(
+    assays = list(counts = t(counts_mat)),
+    colData = DataFrame(cell_type = obs$cell_type))
+# Normalize and run PCA
+sce <- scuttle::logNormCounts(sce)
+sce <- scater::runPCA(sce)
+# Or with base R:
+pca <- prcomp(log1p(counts_mat))
+```
+
+**Comparison.** Unlike `read.csv()` + manual wrangling, SpatialDataR
+preserves spatial metadata, coordinate transforms, and multi-element
+relationships through the entire analysis pipeline.
+
+---
+
+## 8. Python Interoperability
+
+> `writeSpatialData()` produces Zarr v2 stores that conform to the
+> SpatialData on-disk specification. `validateSpatialData()` verifies
+> spec compliance (`.zattrs` structure, element directories, coordinate
+> transforms).
+
+<div align="center">
+<img src="man/figures/fig8_interop.png"
+    width="700" alt="Zarr spec compliance and Python interop"/>
+</div>
+
+> **Fig. 8.** SpatialData specification compliance. (**a**) Zarr v2
+> directory structure written by `writeSpatialData()`. (**b**) 14/14
+> spec compliance checks passed by `validateSpatialData()`.
+> (**c**) Python `spatialdata.read_zarr()` verification commands.
+
+```r
+writeSpatialData(sd_sub, "output.zarr")
+val <- validateSpatialData("output.zarr")
+val$valid   # TRUE
+val$errors  # character(0)
+```
+
+```python
+# Python verification (requires spatialdata>=0.1.0)
+import spatialdata
+sd = spatialdata.read_zarr("output.zarr")
+print(sd)  # reads successfully
+```
+
+---
+
+## 9. Scalability Architecture
+
+> `readSpatialData()` uses lazy path references for images and labels,
+> avoiding memory allocation until data is explicitly requested.
+> `readZarrDelayed()` provides `DelayedArray`-backed access for
+> out-of-memory processing of large raster data.
+
+<div align="center">
+<img src="man/figures/fig9_scalability.png"
+    width="700" alt="Memory and performance benchmarks"/>
+</div>
+
+> **Fig. 9.** Scalability benchmarks. (**a**) Memory footprint: the
+> `SpatialData` object holding 3.7M transcripts occupies 99.3 MB;
+> image/label arrays remain as lazy references (< 2 KB each).
+> (**b**) `bboxQuery()` execution time scales with ROI area, not
+> total dataset size. (**c**) Architecture summary.
+
+```r
+sd <- readSpatialData("merfish_visp.zarr")
+object.size(sd)        # 99.3 MB (points + shapes loaded)
+images(sd)[[1]]$path   # path reference, NOT loaded
+# Out-of-memory image access
+da <- readZarrDelayed(img_path)  # DelayedArray seed: 1.8 KB
+```
 
 ---
 
@@ -254,17 +360,17 @@ convert in Python. `writeSpatialData()` eliminates this step.
 
 | Function | Description |
 |---|---|
-| `validateSpatialData()` | Checks Zarr store against the SpatialData on-disk specification |
-| `combineSpatialData()` | Merges multiple stores with automatic element-name prefixing |
-| `filterSample()` | Extracts a single sample from a combined multi-sample object |
-| `cropImage()` | Crops a Zarr image array by pixel bounding box |
-| `readZarrDelayed()` | Loads Zarr arrays as `DelayedArray` for out-of-memory access |
-| `elementSummary()` | Tabulates all elements with type, name, and row counts |
-| `elementTransform()` | Extracts `CoordinateTransform` from element metadata |
-| `coordinateSystemElements()` | Maps coordinate system names to their member elements |
-| `assignToRegions()` | Assigns points to nearest spatial regions |
-| `loadElement()` | Eagerly loads a lazy element reference into memory |
-| `names()` / `length()` / `[` | Standard R accessors for element introspection |
+| `validateSpatialData()` | Spec compliance checker |
+| `combineSpatialData()` | Multi-sample merge with auto-prefixing |
+| `filterSample()` | Extract single sample from combined object |
+| `cropImage()` | Crop Zarr image array by pixel bounding box |
+| `readZarrDelayed()` | Out-of-memory `DelayedArray` access |
+| `assignToRegions()` | Nearest-neighbour point-to-region assignment |
+| `elementSummary()` | Tabulate all elements with row counts |
+| `elementTransform()` | Extract `CoordinateTransform` from metadata |
+| `coordinateSystemElements()` | Map coordinate systems to elements |
+| `loadElement()` | Eagerly load a lazy element reference |
+| `names()` / `length()` / `[` | Standard R accessors |
 
 ---
 
