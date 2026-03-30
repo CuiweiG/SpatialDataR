@@ -170,14 +170,11 @@ pts_roi_sub$gene_top <- factor(
     levels = c(top6, "Other"))
 
 ## Plot Other first (underneath), then top genes on top
-pts_other <- pts_s2[pts_s2$gene_top == "Other", ]
-pts_top   <- pts_s2[pts_s2$gene_top != "Other", ]
+## Sort so Other is plotted first, coloured genes on top
+pts_s2 <- pts_s2[order(pts_s2$gene_top == "Other", decreasing = TRUE), ]
 
-p2a <- ggplot() +
-    geom_point(data = pts_other, aes(x = x, y = y),
-               size = 0.03, alpha = 0.25, colour = "grey75", stroke = 0) +
-    geom_point(data = pts_top, aes(x = x, y = y, colour = gene_top),
-               size = 0.05, alpha = 0.6, stroke = 0) +
+p2a <- ggplot(pts_s2, aes(x = x, y = y, colour = gene_top)) +
+    geom_point(size = 0.04, alpha = 0.45, stroke = 0) +
     scale_colour_manual(values = gene_cols, guide = "none") +
     annotate("rect", xmin = qx[1], xmax = qx[2],
              ymin = qy[1], ymax = qy[2],
@@ -411,9 +408,9 @@ cat("  Written:", n_sub, " Read back:", n_verify, " Match:", n_sub == n_verify, 
 
 set.seed(42)
 pts_s5 <- pts[sample(nrow(pts), 100000), ]
-sub_plot <- sub_pts[sample(nrow(sub_pts), min(12000, nrow(sub_pts))), ]
+sub_plot <- sub_pts[sample(nrow(sub_pts), min(40000, nrow(sub_pts))), ]
 sub_plot$gene_top <- ifelse(sub_plot$gene %in% top6, sub_plot$gene, "Other")
-ver_plot <- verify_pts[sample(nrow(verify_pts), min(15000, nrow(verify_pts))), ]
+ver_plot <- verify_pts[sample(nrow(verify_pts), min(40000, nrow(verify_pts))), ]
 ver_plot$gene_top <- ifelse(ver_plot$gene %in% top6, ver_plot$gene, "Other")
 
 p5a <- ggplot(pts_s5, aes(x = x, y = y)) +
@@ -427,13 +424,10 @@ p5a <- ggplot(pts_s5, aes(x = x, y = y)) +
          subtitle = paste0(format(nrow(pts), big.mark = ","), " transcripts"),
          x = expression("x ("*mu*"m)"), y = expression("y ("*mu*"m)"))
 
-sub_other <- sub_plot[sub_plot$gene_top == "Other", ]
-sub_top   <- sub_plot[sub_plot$gene_top != "Other", ]
-p5b <- ggplot() +
-    geom_point(data = sub_other, aes(x = x, y = y),
-               size = 0.15, alpha = 0.15, colour = "grey75", stroke = 0) +
-    geom_point(data = sub_top, aes(x = x, y = y, colour = gene_top),
-               size = 0.4, alpha = 0.75, stroke = 0) +
+sub_plot$gene_top <- factor(sub_plot$gene_top, levels = c("Other", top6))
+sub_plot <- sub_plot[order(sub_plot$gene_top), ]
+p5b <- ggplot(sub_plot, aes(x = x, y = y, colour = gene_top)) +
+    geom_point(size = 0.12, alpha = 0.55, stroke = 0) +
     scale_colour_manual(values = gene_cols, guide = "none") +
     coord_equal(xlim = qx5, ylim = qy5) + th(9) +
     labs(title = "bboxQuery() + writeSpatialData()",
@@ -445,13 +439,10 @@ p5b <- ggplot() +
           axis.text.y = element_blank(), axis.ticks.y = element_blank(),
           axis.line.y = element_blank())
 
-ver_other <- ver_plot[ver_plot$gene_top == "Other", ]
-ver_top   <- ver_plot[ver_plot$gene_top != "Other", ]
-p5c <- ggplot() +
-    geom_point(data = ver_other, aes(x = x, y = y),
-               size = 0.15, alpha = 0.15, colour = "grey75", stroke = 0) +
-    geom_point(data = ver_top, aes(x = x, y = y, colour = gene_top),
-               size = 0.4, alpha = 0.75, stroke = 0) +
+ver_plot$gene_top <- factor(ver_plot$gene_top, levels = c("Other", top6))
+ver_plot <- ver_plot[order(ver_plot$gene_top), ]
+p5c <- ggplot(ver_plot, aes(x = x, y = y, colour = gene_top)) +
+    geom_point(size = 0.12, alpha = 0.55, stroke = 0) +
     scale_colour_manual(values = gene_cols, guide = "none") +
     coord_equal(xlim = qx5, ylim = qy5) + th(9) +
     labs(title = "readSpatialData() [verify]",
