@@ -32,6 +32,7 @@ Suggests:
     SpatialExperiment,
     SingleCellExperiment,
     DelayedArray,
+    Matrix,
     pizzarr,
     Rarr,
     arrow,

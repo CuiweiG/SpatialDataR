@@ -2,7 +2,7 @@
 % Please edit documentation in R/read-elements.R
 \name{.readAnnDataX}
 \alias{.readAnnDataX}
-\title{Read AnnData X matrix (Zarr or CSV)}
+\title{Read AnnData X matrix (Zarr, CSV, or sparse)}
 \usage{
 .readAnnDataX(x_path)
 }
@@ -10,9 +10,9 @@
 \item{x_path}{Path to the X matrix directory or CSV file.}
 }
 \value{
-A numeric matrix or \code{NULL}.
+A numeric matrix, sparse matrix, or \code{NULL}.
 }
 \description{
-Read AnnData X matrix (Zarr or CSV)
+Read AnnData X matrix (Zarr, CSV, or sparse)
 }
 \keyword{internal}

@@ -8,15 +8,18 @@ readZarrArray(zarr_path)
 }
 \arguments{
 \item{zarr_path}{Path to a Zarr array directory (containing
-\code{.zarray} metadata and chunk files).}
+\code{.zarray} or \code{zarr.json} metadata and chunk
+files).}
 }
 \value{
-A numeric matrix or array.
+A numeric vector, matrix, array, or character vector.
 }
 \description{
-Reads a Zarr array using \pkg{Rarr} or \pkg{pizzarr} as backend.
-The full array is loaded into memory as a numeric matrix or
-array.
+Reads a Zarr array from a directory. Automatically detects
+Zarr v2 (\code{.zarray} metadata) or Zarr v3
+(\code{zarr.json} metadata) format. For v2, uses \pkg{Rarr}
+or \pkg{pizzarr}. For v3, uses built-in reader with
+\pkg{arrow} for zstd decompression.
 }
 \examples{
 store <- system.file("extdata", "xenium_mini.zarr",

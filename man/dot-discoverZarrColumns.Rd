@@ -2,7 +2,7 @@
 % Please edit documentation in R/read-elements.R
 \name{.discoverZarrColumns}
 \alias{.discoverZarrColumns}
-\title{Discover column order from Zarr group .zattrs}
+\title{Discover column order from Zarr group metadata}
 \usage{
 .discoverZarrColumns(group_path)
 }
@@ -13,6 +13,7 @@
 Character vector of column names.
 }
 \description{
-Discover column order from Zarr group .zattrs
+Reads column-order and index information from either
+\code{.zattrs} (Zarr v2) or \code{zarr.json} (Zarr v3).
 }
 \keyword{internal}
