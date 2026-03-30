@@ -95,63 +95,62 @@ x_rng <- range(pts$x); y_rng <- range(pts$y)
 ## ======================================================================
 cat("--- Fig 1: Store reading ---\n")
 
-## ---- Spatial rasterization (Allen Institute / Zhuang lab style) ----
-## Bin transcripts into spatial grid, assign each bin to dominant layer
-## This creates solid-fill tissue maps, not sparse point clouds
-pts_cortex <- pts[pts$layer %in% cortex_layers, ]
-bin_size <- 15  # um per bin — controls resolution
+## ---- Rasterized tissue map (single clean panel) ----
+## Bin ALL transcripts (not just cortex) for complete tissue coverage
+bin_size <- 10  # um — high resolution
 
-pts_cortex$xbin <- round(pts_cortex$x / bin_size) * bin_size
-pts_cortex$ybin <- round(pts_cortex$y / bin_size) * bin_size
+pts$xbin <- round(pts$x / bin_size) * bin_size
+pts$ybin <- round(pts$y / bin_size) * bin_size
 
-## For overlay: assign each bin to the layer with most transcripts
-bin_layer <- aggregate(layer ~ xbin + ybin, data = pts_cortex,
+## Each bin → dominant layer (majority vote)
+bin_layer <- aggregate(layer ~ xbin + ybin, data = pts,
                        FUN = function(x) {
                            tt <- table(x)
                            names(tt)[which.max(tt)]
                        })
-bin_layer$layer_f <- factor(bin_layer$layer, levels = cortex_layers)
+## Clean layer labels for display
+layer_labels <- c(
+    "VISp_I"       = "Layer I",
+    "VISp_II/III"  = "Layer II/III",
+    "VISp_IV"      = "Layer IV",
+    "VISp_V"       = "Layer V",
+    "VISp_VI"      = "Layer VI",
+    "VISp_wm"      = "White matter",
+    "outside_VISp" = "Outside VISp",
+    "VISp"         = "VISp (unspec.)"
+)
+all_layer_cols <- c(layer_cols, "VISp" = "#F0F0F0", "outside_VISp" = "#F0F0F0")
+all_layers_ord <- c(cortex_layers, "VISp", "outside_VISp")
+## Remove VISp and outside_VISp from legend
+bin_layer <- bin_layer[bin_layer$layer %in% cortex_layers, ]
 
-## For facets: count transcripts per bin per layer
-bin_counts <- aggregate(gene ~ xbin + ybin + layer, data = pts_cortex,
-                        FUN = length)
-colnames(bin_counts)[4] <- "count"
-bin_counts$layer_f <- factor(bin_counts$layer, levels = cortex_layers)
+bin_layer$layer_f <- factor(bin_layer$layer, levels = all_layers_ord)
 
-fig1_facet <- ggplot(bin_counts, aes(x = xbin, y = ybin, fill = count)) +
-    geom_tile(width = bin_size, height = bin_size) +
-    scale_fill_viridis_c(option = "inferno", name = "Transcripts\nper bin",
-                          trans = "sqrt", guide = guide_colorbar(barwidth = 0.8)) +
-    facet_wrap(~ layer_f, nrow = 2) +
-    coord_equal() +
-    th(8) + labs(x = expression("x ("*mu*"m)"),
-                 y = expression("y ("*mu*"m)"))
-
-fig1_overlay <- ggplot(bin_layer, aes(x = xbin, y = ybin, fill = layer_f)) +
-    geom_tile(width = bin_size, height = bin_size) +
-    scale_fill_manual(values = layer_cols, name = "Layer") +
-    coord_equal() +
-    annotate("segment", x = x_rng[2] - 600, xend = x_rng[2] - 100,
-             y = y_rng[1] + 60, yend = y_rng[1] + 60,
-             linewidth = 1.2, colour = "black") +
-    annotate("text", x = x_rng[2] - 350, y = y_rng[1] + 60,
-             label = "500 \u00B5m", vjust = -0.7, size = 2.5,
+fig1 <- ggplot(bin_layer, aes(x = xbin, y = ybin, fill = layer_f)) +
+    geom_raster() +
+    scale_fill_manual(values = layer_cols, name = NULL,
+                      labels = layer_labels,
+                      guide = guide_legend(
+                          override.aes = list(colour = NA),
+                          ncol = 1)) +
+    coord_equal(expand = FALSE) +
+    ## Scale bar
+    annotate("segment", x = x_rng[2] - 550, xend = x_rng[2] - 50,
+             y = y_rng[1] + 40, yend = y_rng[1] + 40,
+             linewidth = 1.5, colour = "black") +
+    annotate("text", x = x_rng[2] - 300, y = y_rng[1] + 40,
+             label = "500 \u00B5m", vjust = -0.6, size = 3.2,
              fontface = "bold") +
-    th(8) + labs(x = expression("x ("*mu*"m)"),
-                 y = expression("y ("*mu*"m)"))
-
-fig1 <- (fig1_facet | fig1_overlay) +
-    plot_layout(widths = c(4, 3)) +
-    plot_annotation(
-        title = "readSpatialData()",
-        subtitle = paste0(format(nrow(pts), big.mark = ","),
-                          " transcripts, ", length(unique(pts$gene)),
-                          " genes read from SpatialData Zarr store ",
-                          "(MERFISH mouse VISp, Moffitt et al. 2018)"),
-        theme = theme(
-            plot.title = element_text(size = 13, face = "bold"),
-            plot.subtitle = element_text(size = 9, colour = "grey30",
-                                          face = "italic")))
+    labs(title = "readSpatialData()",
+         subtitle = paste0(format(nrow(pts), big.mark = ","),
+                           " transcripts, ", length(unique(pts$gene)),
+                           " genes (MERFISH mouse VISp, ",
+                           "Moffitt et al. 2018)"),
+         x = expression("x ("*mu*"m)"),
+         y = expression("y ("*mu*"m)")) +
+    th(10) +
+    theme(legend.text = element_text(size = 9),
+          legend.key.size = unit(0.5, "cm"))
 
 ggsave(file.path(od, "fig1_store_reading.png"), fig1,
        width = 230, height = 120, units = "mm", dpi = 300, bg = "white")
