@@ -35,10 +35,13 @@ stores, exposing elements through Bioconductor-standard S4 classes:
 
 ## Validation
 
-All figures below use the **10x Xenium human breast cancer** dataset
-(Janesick et al. 2023, *Nat Biotechnol*): **34,472,294 transcripts**,
+Figures 1--4 use the **10x Xenium human breast cancer** dataset
+(Janesick et al. 2023, *Nat Commun*): **34,472,294 transcripts**,
 **321 genes**, **167,780 cells** across a 7.5 x 5.5 mm tissue section.
-CC BY 4.0. Reproducible via `inst/scripts/xenium_figures.R`.
+Figure 5 adds the **Vizgen MERFISH mouse brain** dataset (Moffitt
+et al. 2018, *Science*): **3,714,642 transcripts**, **2,389 cells**.
+Both read from SpatialData Zarr stores using `readSpatialData()`.
+CC BY 4.0 / CC0 1.0. Reproducible via `inst/scripts/`.
 
 ---
 
@@ -135,6 +138,32 @@ counts <- aggregatePoints(
 library(SingleCellExperiment)
 sce <- SingleCellExperiment(assays = list(counts = t(count_mat)))
 colData(sce)$cell_type <- cell_types
+```
+
+---
+
+## 5. Cross-platform compatibility: one API, multiple technologies
+
+<div align="center">
+<img src="man/figures/fig5_crossplatform.png"
+    width="700" alt="Cross-platform: Xenium and MERFISH"/>
+</div>
+
+> **Fig. 5.** (**a**) 10x Xenium human breast cancer (34.5M
+> transcripts, 167,780 cells, transcript density map). (**b**) Vizgen
+> MERFISH mouse primary visual cortex (3.7M transcripts, 2,389
+> cells, cortical layer annotation). Both datasets read with the same
+> `readSpatialData()` call — no platform-specific code, no Python
+> dependency.
+
+```r
+# Same API for any SpatialData Zarr store
+sd_xenium  <- readSpatialData("xenium_breast.zarr")
+sd_merfish <- readSpatialData("merfish_brain.zarr")
+
+# Identical downstream workflow
+pts_xen <- spatialPoints(sd_xenium)[["transcripts"]]
+pts_mer <- spatialPoints(sd_merfish)[["single_molecule"]]
 ```
 
 ---
