@@ -134,12 +134,11 @@ p5a <- ggplot(xen_density, aes(x = xb, y = yb, fill = count)) +
          y = expression(italic(y)~"("*mu*"m)")) +
     th(8.5)
 
-## Panel b: MERFISH tissue (transcript density colored by cell type / region)
-mer_bin <- 10
+## Panel b: MERFISH tissue — cortex-preferring binning + gap-fill
+mer_bin <- 8
 mer_pts$xb <- round(mer_pts$x / mer_bin) * mer_bin
 mer_pts$yb <- round(mer_pts$y / mer_bin) * mer_bin
 
-## Assign dominant region per bin
 region_layers <- c("VISp_I", "VISp_II/III", "VISp_IV",
                    "VISp_V", "VISp_VI", "VISp_wm")
 region_cols <- c(
@@ -168,6 +167,43 @@ mer_bin_layer <- aggregate(cell_type ~ xb + yb, data = mer_pts,
                                     "Tissue"
                                 }
                             })
+
+## Morphological gap-fill (5 iterations, >= 3 neighbors)
+filled <- mer_bin_layer
+rownames(filled) <- paste(filled$xb, filled$yb)
+for (iteration in 1:5) {
+    existing_keys <- paste(filled$xb, filled$yb)
+    grid_x <- seq(min(filled$xb), max(filled$xb), by = mer_bin)
+    grid_y <- seq(min(filled$yb), max(filled$yb), by = mer_bin)
+    all_keys <- paste(rep(grid_x, each = length(grid_y)),
+                      rep(grid_y, length(grid_x)))
+    missing_keys <- setdiff(all_keys, existing_keys)
+    new_rows <- list()
+    for (mk in missing_keys) {
+        coords <- as.numeric(strsplit(mk, " ")[[1]])
+        mx <- coords[1]; my <- coords[2]
+        nbr_keys <- paste(
+            rep(mx + c(-1, 0, 1) * mer_bin, each = 3),
+            rep(my + c(-1, 0, 1) * mer_bin, 3))
+        nbr_keys <- setdiff(nbr_keys, mk)
+        nbr_layers <- filled$cell_type[match(nbr_keys, existing_keys)]
+        nbr_layers <- nbr_layers[!is.na(nbr_layers)]
+        if (length(nbr_layers) >= 3) {
+            tt <- table(nbr_layers)
+            new_rows[[mk]] <- data.frame(
+                xb = mx, yb = my,
+                cell_type = names(tt)[which.max(tt)],
+                stringsAsFactors = FALSE)
+        }
+    }
+    if (length(new_rows) > 0) {
+        added <- do.call(rbind, new_rows)
+        filled <- rbind(filled, added)
+        rownames(filled) <- paste(filled$xb, filled$yb)
+        cat("  MERFISH gap-fill", iteration, ":", nrow(added), "bins\n")
+    } else break
+}
+mer_bin_layer <- filled
 mer_bin_layer$layer_f <- factor(mer_bin_layer$cell_type,
                                  levels = c(region_layers, "Tissue"))
 
