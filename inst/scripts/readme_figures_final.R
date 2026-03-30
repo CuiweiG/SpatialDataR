@@ -102,11 +102,21 @@ bin_size <- 10  # um — high resolution
 pts$xbin <- round(pts$x / bin_size) * bin_size
 pts$ybin <- round(pts$y / bin_size) * bin_size
 
-## Each bin → dominant layer (majority vote)
+## Each bin → dominant CORTEX layer; bins with no cortex transcripts
+## become "Tissue" (light grey background) to show complete tissue outline.
 bin_layer <- aggregate(layer ~ xbin + ybin, data = pts,
                        FUN = function(x) {
                            tt <- table(x)
-                           names(tt)[which.max(tt)]
+                           cx_names <- intersect(
+                               names(tt),
+                               c("VISp_I", "VISp_II/III", "VISp_IV",
+                                 "VISp_V", "VISp_VI", "VISp_wm"))
+                           if (length(cx_names) > 0) {
+                               cx_tt <- tt[cx_names]
+                               names(cx_tt)[which.max(cx_tt)]
+                           } else {
+                               "Tissue"
+                           }
                        })
 ## Clean layer labels for display
 layer_labels <- c(
@@ -116,19 +126,17 @@ layer_labels <- c(
     "VISp_V"       = "Layer V",
     "VISp_VI"      = "Layer VI",
     "VISp_wm"      = "White matter",
-    "outside_VISp" = "Outside VISp",
-    "VISp"         = "VISp (unspec.)"
+    "Tissue"       = "Tissue"
 )
-all_layer_cols <- c(layer_cols, "VISp" = "#F0F0F0", "outside_VISp" = "#F0F0F0")
-all_layers_ord <- c(cortex_layers, "VISp", "outside_VISp")
-## Remove VISp and outside_VISp from legend
-bin_layer <- bin_layer[bin_layer$layer %in% cortex_layers, ]
+## Colours: cortex layers + light grey for non-cortex tissue
+fig1_cols <- c(layer_cols, "Tissue" = "#E8E8E8")
+all_levels <- c(cortex_layers, "Tissue")
 
-bin_layer$layer_f <- factor(bin_layer$layer, levels = all_layers_ord)
+bin_layer$layer_f <- factor(bin_layer$layer, levels = all_levels)
 
 fig1 <- ggplot(bin_layer, aes(x = xbin, y = ybin, fill = layer_f)) +
     geom_raster() +
-    scale_fill_manual(values = layer_cols, name = NULL,
+    scale_fill_manual(values = fig1_cols, name = NULL,
                       labels = layer_labels,
                       guide = guide_legend(
                           override.aes = list(colour = NA),
