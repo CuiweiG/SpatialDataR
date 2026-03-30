@@ -159,10 +159,17 @@ region_labels <- c(
 mer_bin_layer <- aggregate(cell_type ~ xb + yb, data = mer_pts,
                             FUN = function(x) {
                                 tt <- table(x)
+                                total <- sum(tt)
                                 cx <- intersect(names(tt), region_layers)
                                 if (length(cx) > 0) {
                                     cx_tt <- tt[cx]
-                                    names(cx_tt)[which.max(cx_tt)]
+                                    ## Only assign cortex if cortex transcripts
+                                    ## make up >= 30% of the bin
+                                    if (sum(cx_tt) / total >= 0.3) {
+                                        names(cx_tt)[which.max(cx_tt)]
+                                    } else {
+                                        "Tissue"
+                                    }
                                 } else {
                                     "Tissue"
                                 }
