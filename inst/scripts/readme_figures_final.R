@@ -95,29 +95,41 @@ x_rng <- range(pts$x); y_rng <- range(pts$y)
 ## ======================================================================
 cat("--- Fig 1: Store reading ---\n")
 
+## ---- Spatial rasterization (Allen Institute / Zhuang lab style) ----
+## Bin transcripts into spatial grid, assign each bin to dominant layer
+## This creates solid-fill tissue maps, not sparse point clouds
 pts_cortex <- pts[pts$layer %in% cortex_layers, ]
-set.seed(42)
-pts_bg <- pts[sample(nrow(pts), 80000), ]
-pts_cx <- pts_cortex[sample(nrow(pts_cortex),
-                             min(150000, nrow(pts_cortex))), ]
-pts_cx$layer_f <- factor(pts_cx$layer, levels = cortex_layers)
+bin_size <- 15  # um per bin — controls resolution
 
-fig1_facet <- ggplot(pts_cx, aes(x = x, y = y, colour = layer_f)) +
-    geom_point(size = 0.02, alpha = 0.55, stroke = 0) +
-    scale_colour_manual(values = layer_cols, guide = "none") +
+pts_cortex$xbin <- round(pts_cortex$x / bin_size) * bin_size
+pts_cortex$ybin <- round(pts_cortex$y / bin_size) * bin_size
+
+## For overlay: assign each bin to the layer with most transcripts
+bin_layer <- aggregate(layer ~ xbin + ybin, data = pts_cortex,
+                       FUN = function(x) {
+                           tt <- table(x)
+                           names(tt)[which.max(tt)]
+                       })
+bin_layer$layer_f <- factor(bin_layer$layer, levels = cortex_layers)
+
+## For facets: count transcripts per bin per layer
+bin_counts <- aggregate(gene ~ xbin + ybin + layer, data = pts_cortex,
+                        FUN = length)
+colnames(bin_counts)[4] <- "count"
+bin_counts$layer_f <- factor(bin_counts$layer, levels = cortex_layers)
+
+fig1_facet <- ggplot(bin_counts, aes(x = xbin, y = ybin, fill = count)) +
+    geom_tile(width = bin_size, height = bin_size) +
+    scale_fill_viridis_c(option = "inferno", name = "Transcripts\nper bin",
+                          trans = "sqrt", guide = guide_colorbar(barwidth = 0.8)) +
     facet_wrap(~ layer_f, nrow = 2) +
     coord_equal() +
     th(8) + labs(x = expression("x ("*mu*"m)"),
                  y = expression("y ("*mu*"m)"))
 
-fig1_overlay <- ggplot() +
-    geom_point(data = pts_bg, aes(x = x, y = y),
-               size = 0.005, alpha = 0.04, colour = "grey60", stroke = 0) +
-    geom_point(data = pts_cx, aes(x = x, y = y, colour = layer_f),
-               size = 0.06, alpha = 0.8, stroke = 0) +
-    scale_colour_manual(values = layer_cols, name = "Layer",
-                        guide = guide_legend(
-                            override.aes = list(size = 3, alpha = 1))) +
+fig1_overlay <- ggplot(bin_layer, aes(x = xbin, y = ybin, fill = layer_f)) +
+    geom_tile(width = bin_size, height = bin_size) +
+    scale_fill_manual(values = layer_cols, name = "Layer") +
     coord_equal() +
     annotate("segment", x = x_rng[2] - 600, xend = x_rng[2] - 100,
              y = y_rng[1] + 60, yend = y_rng[1] + 60,
