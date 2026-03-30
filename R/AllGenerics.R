@@ -1,11 +1,11 @@
 # R/AllGenerics.R
-# Generic function definitions â€?extension points for ecosystem
+# Generic function definitions -- extension points for ecosystem
 
 #' @include AllClasses.R
 #' @importFrom methods setGeneric
 NULL
 
-# readSpatialData is a plain function (not generic) â€?see read-zarr.R
+# readSpatialData is a plain function (not generic) -- see read-zarr.R
 
 #' Access images from a SpatialData object
 #'

@@ -1,5 +1,5 @@
 # R/read-zarr.R
-# Core Zarr store reading â€?no Python dependency
+# Core Zarr store reading -- no Python dependency
 
 #' @include AllClasses.R
 #' @include AllGenerics.R
@@ -15,7 +15,7 @@ NULL
 #' discovered from the directory structure and \code{.zattrs}
 #' metadata. Points and shapes stored as CSV or Parquet are
 #' loaded as \code{DataFrame} objects. Images and labels are
-#' stored as path references â€?use \code{\link{readZarrArray}} to
+#' stored as path references -- use \code{\link{readZarrArray}} to
 #' load them into memory.
 #'
 #' @param path Character. Path to a \code{.zarr} directory.
@@ -143,7 +143,7 @@ readSpatialData <- function(path, elements = NULL, ...) {
     SimpleList(elements)
 }
 
-#' Read points or shapes â€?CSV/Parquet eager load
+#' Read points or shapes -- CSV/Parquet eager load
 #' @param dir_path Path to the points or shapes directory.
 #' @param type Character label for element type.
 #' @return A \code{SimpleList} of \code{DataFrame} or descriptor lists.
@@ -222,7 +222,7 @@ readSpatialData <- function(path, elements = NULL, ...) {
     data
 }
 
-#' Read tables group â€?attempt SpatialExperiment conversion
+#' Read tables group -- attempt SpatialExperiment conversion
 #' @param dir_path Path to the tables directory.
 #' @return A \code{SimpleList} of table objects (list or SpatialExperiment).
 #' @keywords internal

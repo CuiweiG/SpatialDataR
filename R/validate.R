@@ -1,6 +1,6 @@
 # R/validate.R
 # Validate SpatialData Zarr store against specification
-# No equivalent exists in R â€?fills a real gap.
+# No equivalent exists in R -- fills a real gap.
 
 #' @include AllClasses.R
 #' @importFrom jsonlite fromJSON

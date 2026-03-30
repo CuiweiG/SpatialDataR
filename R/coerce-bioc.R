@@ -1,5 +1,5 @@
 # R/coerce-bioc.R
-# Bioconductor bridge: SpatialData â†?SingleCellExperiment / SpatialExperiment
+# Bioconductor bridge: SpatialData -> SingleCellExperiment / SpatialExperiment
 
 #' @include AllClasses.R
 #' @include AllGenerics.R
