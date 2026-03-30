@@ -138,7 +138,7 @@ de <- spatialDiffExpression(
     expr_mat = count_matrix,
     group1   = cell_type == "Epithelial",
     group2   = cell_type == "Stromal")
-# 131 significant genes (|log2FC| > 1, adjusted p < 0.01)
+# 38 significant genes (|log2FC| > 1, adjusted p < 0.01, 3000 cells)
 ```
 
 ---
