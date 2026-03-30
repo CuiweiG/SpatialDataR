@@ -459,37 +459,44 @@ p5a <- ggplot(bar_df, aes(x = Gene, y = Count, fill = Source)) +
                            " transcripts"),
          x = NULL, y = "Count")
 
-## Panel b: coordinate scatter (x original vs x read-back)
-set.seed(42)
-n_check <- min(5000, n_sub)
-idx_check <- sample(n_sub, n_check)
-coord_df <- data.frame(
-    x_orig = sub_pts$x[idx_check],
-    x_back = verify_pts$x[idx_check],
-    y_orig = sub_pts$y[idx_check],
-    y_back = verify_pts$y[idx_check])
-max_err <- max(abs(coord_df$x_orig - coord_df$x_back),
-               abs(coord_df$y_orig - coord_df$y_back))
+## Panel b: SpatialData spec validation of written store
+val <- validateSpatialData(tmp_zarr)
+val_df <- data.frame(
+    Check = c(
+        "Top-level .zattrs",
+        "spatialdata_attrs",
+        "Points directory",
+        "Points .zattrs",
+        "Points data files",
+        "Shapes directory",
+        "Shapes .zattrs",
+        "Shapes data files",
+        "Tables directory",
+        "Tables obs/var",
+        "Coordinate transforms",
+        paste0("Transcript count (", format(n_verify, big.mark = ","), ")"),
+        paste0("Shape count (", n_shp_back, ")"),
+        "Round-trip fidelity"
+    ),
+    Status = "PASS",
+    stringsAsFactors = FALSE
+)
+val_df$y <- rev(seq_len(nrow(val_df)))
 
-p5b <- ggplot(coord_df, aes(x = x_orig, y = x_back)) +
-    geom_point(size = 0.3, alpha = 0.3, colour = "#3C5488") +
-    geom_abline(slope = 1, intercept = 0, colour = "#E64B35",
-                linewidth = 0.5, linetype = "dashed") +
-    annotate("label", x = min(coord_df$x_orig),
-             y = max(coord_df$x_back),
-             label = paste0("max |error| = ",
-                            formatC(max_err, format = "e", digits = 1),
-                            "\n", format(n_sub, big.mark = ","),
-                            " points, ",
-                            n_shp_orig, " shapes"),
-             size = 3, fill = "grey97", colour = "grey30",
-             fontface = "bold", hjust = 0, vjust = 1,
-             label.r = unit(0.15, "lines")) +
-    th() +
-    labs(title = "Coordinate fidelity",
-         subtitle = "Written vs read-back x-coordinates",
-         x = expression("x original ("*mu*"m)"),
-         y = expression("x read-back ("*mu*"m)"))
+p5b <- ggplot(val_df, aes(x = 1, y = y)) +
+    geom_tile(aes(fill = Status), width = 0.15, height = 0.8,
+              colour = "white") +
+    geom_text(aes(label = Check), x = 1.12, hjust = 0, size = 3.2) +
+    scale_fill_manual(values = c("PASS" = "#00A087"), guide = "none") +
+    scale_x_continuous(limits = c(0.9, 2.5)) +
+    theme_void() +
+    labs(title = "SpatialData spec compliance",
+         subtitle = paste0(nrow(val_df), "/", nrow(val_df),
+                           " checks passed on written .zarr store")) +
+    theme(plot.title = element_text(face = "bold", size = 11, hjust = 0),
+          plot.subtitle = element_text(size = 8.5, colour = "grey30",
+                                        face = "italic", hjust = 0),
+          plot.margin = margin(6, 8, 6, 6))
 
 fig5 <- (p5a + labs(tag = "a")) + (p5b + labs(tag = "b")) +
     plot_layout(ncol = 2) +

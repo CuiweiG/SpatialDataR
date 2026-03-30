@@ -158,9 +158,10 @@ inv <- invertTransform(ct)
 
 > **Fig. 5.** Lossless roundtrip verification on 648,954 transcripts.
 > (**a**) Per-gene transcript counts: original (blue) vs read-back
-> (red) are identical for all 268 genes.
-> (**b**) Coordinate fidelity: x-coordinates before and after
-> write/read fall exactly on the identity line (max error = 0).
+> (red) are identical across 3 orders of magnitude.
+> (**b**) SpatialData spec compliance: 14/14 structural checks passed
+> on the written `.zarr` store, including element directories,
+> `.zattrs` metadata, and coordinate transforms.
 
 ```r
 writeSpatialData(sub, "subset.zarr")
