@@ -65,8 +65,17 @@ pts <- as.data.frame(spatialPoints(sd)[["transcripts"]])
 shp <- as.data.frame(shapes(sd)[["cell_boundaries"]])
 obs <- as.data.frame(tables(sd)[["table"]]$obs)
 
+## Assign layers by matching transcript coords to raw CSV coords
+## (row counts differ: pts=3,714,642 vs raw=3,841,412)
 raw <- read.csv("C:/Users/win10/merfish_real.csv", stringsAsFactors = FALSE)
-pts$layer <- raw$layer[seq_len(nrow(pts))]
+## Build a spatial lookup: round coords to 0.01 precision for matching
+raw$key <- paste0(round(raw$x_um, 2), "_", round(raw$y_um, 2))
+pts$key <- paste0(round(pts$x, 2), "_", round(pts$y, 2))
+layer_lookup <- setNames(raw$layer, raw$key)
+## Remove duplicates — take first match
+layer_lookup <- layer_lookup[!duplicated(names(layer_lookup))]
+pts$layer <- layer_lookup[pts$key]
+cat("  Layer match rate:", round(100 * mean(!is.na(pts$layer)), 1), "%\n")
 
 cat("  Transcripts:", format(nrow(pts), big.mark = ","), "\n")
 cat("  Genes:", length(unique(pts$gene)), "\n")
@@ -103,9 +112,9 @@ fig1_facet <- ggplot(pts_cx, aes(x = x, y = y, colour = layer_f)) +
 
 fig1_overlay <- ggplot() +
     geom_point(data = pts_bg, aes(x = x, y = y),
-               size = 0.005, alpha = 0.03, colour = "grey70", stroke = 0) +
+               size = 0.005, alpha = 0.04, colour = "grey60", stroke = 0) +
     geom_point(data = pts_cx, aes(x = x, y = y, colour = layer_f),
-               size = 0.03, alpha = 0.6, stroke = 0) +
+               size = 0.06, alpha = 0.8, stroke = 0) +
     scale_colour_manual(values = layer_cols, name = "Layer",
                         guide = guide_legend(
                             override.aes = list(size = 3, alpha = 1))) +
@@ -155,13 +164,20 @@ pts_s2 <- pts[sample(nrow(pts), 100000), ]
 pts_s2$gene_top <- factor(ifelse(pts_s2$gene %in% top6, pts_s2$gene, "Other"),
                            levels = c(top6, "Other"))
 
-pts_roi_sub <- pts_roi[sample(nrow(pts_roi), min(10000, nrow(pts_roi))), ]
+pts_roi_sub <- pts_roi[sample(nrow(pts_roi), min(15000, nrow(pts_roi))), ]
 pts_roi_sub$gene_top <- factor(
     ifelse(pts_roi_sub$gene %in% top6, pts_roi_sub$gene, "Other"),
     levels = c(top6, "Other"))
 
-p2a <- ggplot(pts_s2, aes(x = x, y = y, colour = gene_top)) +
-    geom_point(size = 0.02, alpha = 0.25, stroke = 0) +
+## Plot Other first (underneath), then top genes on top
+pts_other <- pts_s2[pts_s2$gene_top == "Other", ]
+pts_top   <- pts_s2[pts_s2$gene_top != "Other", ]
+
+p2a <- ggplot() +
+    geom_point(data = pts_other, aes(x = x, y = y),
+               size = 0.03, alpha = 0.25, colour = "grey75", stroke = 0) +
+    geom_point(data = pts_top, aes(x = x, y = y, colour = gene_top),
+               size = 0.05, alpha = 0.6, stroke = 0) +
     scale_colour_manual(values = gene_cols, guide = "none") +
     annotate("rect", xmin = qx[1], xmax = qx[2],
              ymin = qy[1], ymax = qy[2],
@@ -233,7 +249,7 @@ cell_layers <- layer_votes[as.character(cids)]
 ## Filter to cells with cortical layer assignments and >50 counts
 keep <- !is.na(cell_layers) &
         cell_layers %in% cortex_layers &
-        rowSums(counts_mat) > 50
+        rowSums(counts_mat) > 5
 counts_filt <- counts_mat[keep, ]
 layers_filt <- cell_layers[keep]
 
@@ -397,11 +413,11 @@ set.seed(42)
 pts_s5 <- pts[sample(nrow(pts), 100000), ]
 sub_plot <- sub_pts[sample(nrow(sub_pts), min(12000, nrow(sub_pts))), ]
 sub_plot$gene_top <- ifelse(sub_plot$gene %in% top6, sub_plot$gene, "Other")
-ver_plot <- verify_pts[sample(nrow(verify_pts), min(12000, nrow(verify_pts))), ]
+ver_plot <- verify_pts[sample(nrow(verify_pts), min(15000, nrow(verify_pts))), ]
 ver_plot$gene_top <- ifelse(ver_plot$gene %in% top6, ver_plot$gene, "Other")
 
 p5a <- ggplot(pts_s5, aes(x = x, y = y)) +
-    geom_point(size = 0.02, alpha = 0.2, colour = "grey40") +
+    geom_point(size = 0.03, alpha = 0.35, colour = "grey30") +
     annotate("rect", xmin = qx5[1], xmax = qx5[2],
              ymin = qy5[1], ymax = qy5[2],
              fill = NA, colour = "#0072B2", linewidth = 0.8,
@@ -411,8 +427,13 @@ p5a <- ggplot(pts_s5, aes(x = x, y = y)) +
          subtitle = paste0(format(nrow(pts), big.mark = ","), " transcripts"),
          x = expression("x ("*mu*"m)"), y = expression("y ("*mu*"m)"))
 
-p5b <- ggplot(sub_plot, aes(x = x, y = y, colour = gene_top)) +
-    geom_point(size = 0.2, alpha = 0.5, stroke = 0) +
+sub_other <- sub_plot[sub_plot$gene_top == "Other", ]
+sub_top   <- sub_plot[sub_plot$gene_top != "Other", ]
+p5b <- ggplot() +
+    geom_point(data = sub_other, aes(x = x, y = y),
+               size = 0.15, alpha = 0.15, colour = "grey75", stroke = 0) +
+    geom_point(data = sub_top, aes(x = x, y = y, colour = gene_top),
+               size = 0.4, alpha = 0.75, stroke = 0) +
     scale_colour_manual(values = gene_cols, guide = "none") +
     coord_equal(xlim = qx5, ylim = qy5) + th(9) +
     labs(title = "bboxQuery() + writeSpatialData()",
@@ -424,8 +445,13 @@ p5b <- ggplot(sub_plot, aes(x = x, y = y, colour = gene_top)) +
           axis.text.y = element_blank(), axis.ticks.y = element_blank(),
           axis.line.y = element_blank())
 
-p5c <- ggplot(ver_plot, aes(x = x, y = y, colour = gene_top)) +
-    geom_point(size = 0.2, alpha = 0.5, stroke = 0) +
+ver_other <- ver_plot[ver_plot$gene_top == "Other", ]
+ver_top   <- ver_plot[ver_plot$gene_top != "Other", ]
+p5c <- ggplot() +
+    geom_point(data = ver_other, aes(x = x, y = y),
+               size = 0.15, alpha = 0.15, colour = "grey75", stroke = 0) +
+    geom_point(data = ver_top, aes(x = x, y = y, colour = gene_top),
+               size = 0.4, alpha = 0.75, stroke = 0) +
     scale_colour_manual(values = gene_cols, guide = "none") +
     coord_equal(xlim = qx5, ylim = qy5) + th(9) +
     labs(title = "readSpatialData() [verify]",
