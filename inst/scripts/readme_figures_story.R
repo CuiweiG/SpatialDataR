@@ -208,14 +208,14 @@ p3a <- ggplot(top_spatial, aes(x=reorder(gene, observed), y=observed,
     th(8.5) +
     theme(axis.text.y=element_text(face="italic", size=7.5))
 
-## Panel b: spatial map of top spatially variable gene (CEACAM6)
+## Panel b: spatial map of top gene using ALL 167K cells
 top_gene <- top_spatial$gene[1]
-gene_expr <- sub_mat[, top_gene]
-plot_df <- data.frame(x=sub_coords$x, y=sub_coords$y, expr=gene_expr)
-plot_df <- plot_df[order(plot_df$expr), ]  # low values first
+all_expr <- as.numeric(assay(sce, "counts")[top_gene, ])
+plot_df <- data.frame(x=coords$x, y=coords$y, expr=all_expr)
+plot_df <- plot_df[order(plot_df$expr), ]  # low values first, high on top
 
 p3b <- ggplot(plot_df, aes(x=x, y=y, colour=expr)) +
-    geom_point(size=0.4, alpha=0.8) +
+    geom_point(size=0.08, alpha=0.7, shape=16) +
     scale_colour_viridis_c(option="inferno", name="Counts",
                             trans="sqrt") +
     coord_equal(expand=FALSE) +
@@ -282,13 +282,29 @@ p4a <- ggplot(de, aes(x=log2FC, y=neglog10p, colour=sig_cat)) +
          y=expression(-log[10]~"adjusted p-value")) +
     th(8.5)
 
-## Panel b: spatial map colored by cell type (subsampled)
-ct_df <- data.frame(x=sub_coords$x, y=sub_coords$y, type=sub_ct)
+## Panel b: spatial cell type map using ALL 167K cells
+## Assign cell types on full data
+full_mat <- t(as.matrix(assay(sce, "counts")))
+full_avail <- intersect(c("EPCAM","PTPRC","PECAM1"), colnames(full_mat))
+full_stro <- intersect(c("LUM","POSTN","SFRP4"), colnames(full_mat))
+full_mk <- full_mat[, full_avail]
+if (length(full_stro) > 0)
+    full_mk <- cbind(full_mk, Stromal=rowMeans(full_mat[, full_stro, drop=FALSE]))
+full_ct <- apply(full_mk, 1, function(row) {
+    if(max(row)==0) return("Unassigned")
+    nm <- colnames(full_mk)[which.max(row)]
+    switch(nm,"EPCAM"="Epithelial","PTPRC"="Immune","PECAM1"="Endothelial",
+           "Stromal"="Stromal","Unassigned")
+})
+
+ct_df <- data.frame(x=coords$x, y=coords$y, type=full_ct)
 ct_df <- ct_df[ct_df$type %in% keep_types, ]
 ct_df$type <- factor(ct_df$type, levels=keep_types)
+## Shuffle to avoid overplotting bias
+set.seed(42); ct_df <- ct_df[sample(nrow(ct_df)), ]
 
 p4b <- ggplot(ct_df, aes(x=x, y=y, colour=type)) +
-    geom_point(size=0.4, alpha=0.7) +
+    geom_point(size=0.08, alpha=0.5, shape=16) +
     scale_colour_manual(values=ct_cols, name="Cell type") +
     coord_equal(expand=FALSE) +
     labs(x=expression(italic(x)~"("*mu*"m)"),
