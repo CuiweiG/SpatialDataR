@@ -411,11 +411,19 @@ p5a <- ggplot(density, aes(x=xb,y=yb,fill=count)) + geom_raster() +
     th(8.5)
 
 ## Panel b: MERFISH polygons + cells
+## Transcript density raster inside polygons for texture
+## Bin transcripts that have a layer assignment
+mer_pts_in <- mer_pts[!is.na(mer_pts$layer), ]
+mer_bin <- 8
+mer_pts_in$xb <- round(mer_pts_in$x / mer_bin) * mer_bin
+mer_pts_in$yb <- round(mer_pts_in$y / mer_bin) * mer_bin
+mer_dens <- aggregate(layer ~ xb + yb, data=mer_pts_in, FUN=length)
+colnames(mer_dens)[3] <- "n"
+
 p5b <- ggplot() +
     geom_polygon(data=poly_df[!is.na(poly_df$layer),],
                  aes(x=x,y=y,fill=layer,group=region_id),
-                 colour="white",linewidth=0.4) +
-    geom_point(data=mer_cells, aes(x=x,y=y), size=0.3, alpha=0.4, colour="grey20") +
+                 colour="white",linewidth=0.5, alpha=0.85) +
     scale_fill_manual(values=layer_cols, name="Layer", labels=layer_labels) +
     coord_equal(expand=FALSE) +
     annotate("segment",x=max(mer_pts$x)-550,xend=max(mer_pts$x)-50,
