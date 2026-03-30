@@ -187,28 +187,34 @@ p2a <- ggplot(density_all, aes(x = xb2, y = yb2, fill = count)) +
     coord_equal(expand = FALSE) + th() +
     labs(x = expression("x ("*mu*"m)"), y = expression("y ("*mu*"m)"))
 
-## Panel b: zoomed ROI — rasterize by dominant gene
+## Panel b: zoomed ROI — rasterize by CORTICAL LAYER (not gene)
+## Gene-dominant maps fail because Slc17a7 dominates every bin
 bin_roi <- 5
-pts_roi$xbr <- round(pts_roi$x / bin_roi) * bin_roi
-pts_roi$ybr <- round(pts_roi$y / bin_roi) * bin_roi
-roi_gene <- aggregate(gene ~ xbr + ybr, data = pts_roi,
-                       FUN = function(x) {
-                           tt <- table(x)
-                           names(tt)[which.max(tt)]
-                       })
-roi_gene$gene_top <- ifelse(roi_gene$gene %in% top6, roi_gene$gene, "Other")
-roi_gene$gene_top <- factor(roi_gene$gene_top, levels = c(top6, "Other"))
+pts_roi$layer <- pts$layer[match(
+    paste0(round(pts_roi$x, 2), "_", round(pts_roi$y, 2)),
+    pts$key)]
+pts_roi_cx <- pts_roi[!is.na(pts_roi$layer) &
+                       pts_roi$layer %in% cortex_layers, ]
+pts_roi_cx$xbr <- round(pts_roi_cx$x / bin_roi) * bin_roi
+pts_roi_cx$ybr <- round(pts_roi_cx$y / bin_roi) * bin_roi
+roi_layer <- aggregate(layer ~ xbr + ybr, data = pts_roi_cx,
+                        FUN = function(x) {
+                            tt <- table(x)
+                            names(tt)[which.max(tt)]
+                        })
+roi_layer$layer_f <- factor(roi_layer$layer, levels = cortex_layers)
 
-p2b <- ggplot(roi_gene, aes(x = xbr, y = ybr, fill = gene_top)) +
+p2b <- ggplot(roi_layer, aes(x = xbr, y = ybr, fill = layer_f)) +
     geom_raster() +
-    scale_fill_manual(values = gene_cols, name = "Dominant\ngene") +
+    scale_fill_manual(values = layer_cols, name = "Layer",
+                      labels = layer_labels) +
     coord_equal(xlim = qx, ylim = qy, expand = FALSE) +
     annotate("segment", x = qx[2] - 120, xend = qx[2] - 20,
              y = qy[1] + 15, yend = qy[1] + 15,
-             linewidth = 1.2, colour = "black") +
+             linewidth = 1.2, colour = "white") +
     annotate("text", x = qx[2] - 70, y = qy[1] + 15,
              label = "100 \u00B5m", vjust = -0.7, size = 2.5,
-             fontface = "bold") +
+             fontface = "bold", colour = "white") +
     th() + labs(x = expression("x ("*mu*"m)"), y = NULL) +
     theme(panel.border = element_rect(colour = "#FF4500",
                                        linewidth = 1, fill = NA),
@@ -439,29 +445,36 @@ p5a <- ggplot(dens5, aes(x = xb5, y = yb5, fill = count)) +
          subtitle = paste0(format(nrow(pts), big.mark = ","), " transcripts"),
          x = expression("x ("*mu*"m)"), y = expression("y ("*mu*"m)"))
 
-## Panels b,c: rasterized ROI by dominant gene
-bin5r <- 5
-sub_pts$xbr5 <- round(sub_pts$x / bin5r) * bin5r
-sub_pts$ybr5 <- round(sub_pts$y / bin5r) * bin5r
-sub_gene <- aggregate(gene ~ xbr5 + ybr5, data = sub_pts,
-                       FUN = function(x) {
-                           tt <- table(x); names(tt)[which.max(tt)]
-                       })
-sub_gene$gene_top <- ifelse(sub_gene$gene %in% top6, sub_gene$gene, "Other")
-sub_gene$gene_top <- factor(sub_gene$gene_top, levels = c(top6, "Other"))
+## Panels b,c: rasterized ROI by CORTICAL LAYER
+bin5r <- 8
+sub_pts$layer <- pts$layer[match(
+    paste0(round(sub_pts$x, 2), "_", round(sub_pts$y, 2)),
+    pts$key)]
+sub_cx <- sub_pts[!is.na(sub_pts$layer) & sub_pts$layer %in% cortex_layers, ]
+sub_cx$xbr5 <- round(sub_cx$x / bin5r) * bin5r
+sub_cx$ybr5 <- round(sub_cx$y / bin5r) * bin5r
+sub_layer <- aggregate(layer ~ xbr5 + ybr5, data = sub_cx,
+                        FUN = function(x) {
+                            tt <- table(x); names(tt)[which.max(tt)]
+                        })
+sub_layer$layer_f <- factor(sub_layer$layer, levels = cortex_layers)
 
-verify_pts$xbr5 <- round(verify_pts$x / bin5r) * bin5r
-verify_pts$ybr5 <- round(verify_pts$y / bin5r) * bin5r
-ver_gene <- aggregate(gene ~ xbr5 + ybr5, data = verify_pts,
-                       FUN = function(x) {
-                           tt <- table(x); names(tt)[which.max(tt)]
-                       })
-ver_gene$gene_top <- ifelse(ver_gene$gene %in% top6, ver_gene$gene, "Other")
-ver_gene$gene_top <- factor(ver_gene$gene_top, levels = c(top6, "Other"))
+verify_pts$layer <- pts$layer[match(
+    paste0(round(verify_pts$x, 2), "_", round(verify_pts$y, 2)),
+    pts$key)]
+ver_cx <- verify_pts[!is.na(verify_pts$layer) &
+                      verify_pts$layer %in% cortex_layers, ]
+ver_cx$xbr5 <- round(ver_cx$x / bin5r) * bin5r
+ver_cx$ybr5 <- round(ver_cx$y / bin5r) * bin5r
+ver_layer <- aggregate(layer ~ xbr5 + ybr5, data = ver_cx,
+                        FUN = function(x) {
+                            tt <- table(x); names(tt)[which.max(tt)]
+                        })
+ver_layer$layer_f <- factor(ver_layer$layer, levels = cortex_layers)
 
-p5b <- ggplot(sub_gene, aes(x = xbr5, y = ybr5, fill = gene_top)) +
+p5b <- ggplot(sub_layer, aes(x = xbr5, y = ybr5, fill = layer_f)) +
     geom_raster() +
-    scale_fill_manual(values = gene_cols, guide = "none") +
+    scale_fill_manual(values = layer_cols, guide = "none") +
     coord_equal(xlim = qx5, ylim = qy5, expand = FALSE) + th(9) +
     labs(title = "bboxQuery() + writeSpatialData()",
          subtitle = paste0(format(n_sub, big.mark = ","),
@@ -472,9 +485,9 @@ p5b <- ggplot(sub_gene, aes(x = xbr5, y = ybr5, fill = gene_top)) +
           axis.text.y = element_blank(), axis.ticks.y = element_blank(),
           axis.line.y = element_blank())
 
-p5c <- ggplot(ver_gene, aes(x = xbr5, y = ybr5, fill = gene_top)) +
+p5c <- ggplot(ver_layer, aes(x = xbr5, y = ybr5, fill = layer_f)) +
     geom_raster() +
-    scale_fill_manual(values = gene_cols, guide = "none") +
+    scale_fill_manual(values = layer_cols, guide = "none") +
     coord_equal(xlim = qx5, ylim = qy5, expand = FALSE) + th(9) +
     labs(title = "readSpatialData() [verify]",
          subtitle = paste0(format(n_verify, big.mark = ","),
