@@ -38,8 +38,9 @@ stores, exposing elements through Bioconductor-standard S4 classes:
 Figures 1--4 use the **10x Xenium human breast cancer** dataset
 (Janesick et al. 2023, *Nat Commun*): **34,472,294 transcripts**,
 **321 genes**, **167,780 cells** across a 7.5 x 5.5 mm tissue section.
-Figure 5 adds the **Vizgen MERFISH mouse brain** dataset (Moffitt
-et al. 2018, *Science*): **3,714,642 transcripts**, **2,389 cells**.
+Figure 5 adds the **Allen Institute MERFISH mouse VISp** dataset
+(SpaceTx consortium): **3,714,642 transcripts**, **2,389 cells**,
+**268 genes**.
 Both read from SpatialData Zarr stores using `readSpatialData()`.
 CC BY 4.0 / CC0 1.0. Reproducible via `inst/scripts/`.
 
@@ -152,11 +153,11 @@ colData(sce)$cell_type <- cell_types
 </div>
 
 > **Fig. 5.** (**a**) 10x Xenium human breast cancer (34.5M
-> transcripts, 167,780 cells, transcript density map). (**b**) Vizgen
-> MERFISH mouse primary visual cortex (3.7M transcripts, 2,389
-> cells, cortical layer annotation). Both datasets read with the same
-> `readSpatialData()` call — no platform-specific code, no Python
-> dependency.
+> transcripts, 167,780 cells, transcript density map). (**b**) Allen
+> Institute MERFISH mouse primary visual cortex (3.7M transcripts,
+> 2,389 cells, 268 genes, cortical layer annotation from spatial
+> metadata). Both datasets read with the same `readSpatialData()`
+> call — no platform-specific code, no Python dependency.
 
 ```r
 # Same API for any SpatialData Zarr store

@@ -228,12 +228,12 @@ p5b <- ggplot(mer_bin_layer, aes(x = xb, y = yb, fill = layer_f)) +
              x = max(mer_pts$x) - 300, y = min(mer_pts$y) + 50,
              label = "500 \u00b5m", vjust = -0.7, size = 2.5,
              colour = "black", fontface = "bold") +
-    labs(title = "Vizgen MERFISH",
+    labs(title = "MERFISH",
          subtitle = paste0("Mouse primary visual cortex\n",
                            format(nrow(mer_pts), big.mark = ","),
                            " transcripts, ",
                            format(nrow(mer_cells), big.mark = ","),
-                           " cells"),
+                           " cells, 268 genes"),
          x = expression(italic(x)~"("*mu*"m)"),
          y = expression(italic(y)~"("*mu*"m)")) +
     th(8.5)
