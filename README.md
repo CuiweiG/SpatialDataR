@@ -35,7 +35,7 @@ stores, exposing elements through Bioconductor-standard S4 classes:
 
 ## Validation
 
-All figures use the **MERFISH mouse primary visual cortex (VISp)**
+All figures below use the **MERFISH mouse primary visual cortex (VISp)**
 dataset (Moffitt et al. 2018, *Science*): **3,714,642 transcripts**,
 **268 genes**, **160 cells**, **8 cortical layers**. Public domain
 (CC0 1.0), reproducible via `inst/scripts/create_real_store.R`.
@@ -104,18 +104,16 @@ sub <- bboxQuery(sd,
     width="700" alt="Cell x gene count matrix"/>
 </div>
 
-> **Fig. 3.** Cell x gene count matrix from **real MERFISH data**
-> (160 cells x top 20 variable genes of 268). Transcripts assigned to
-> cell centroids by nearest-neighbour matching (321,837 of 3.7M within
-> 2x cell radius). Cells grouped by cortical layer; layer-specific
-> marker patterns clearly visible.
+> **Fig. 3.** Cell x gene count matrix from **real MERFISH data**.
+> Top 20 most variable genes (of 268), cells grouped by cortical layer,
+> column-scaled expression. Transcripts assigned to cell centroids by
+> nearest-neighbour matching.
 
 ```r
 counts <- aggregatePoints(
     spatialPoints(sd)[["transcripts"]],
     shapes(sd)[["cell_boundaries"]],
     feature_col = "gene", region_col = "cell_id")
-#> 160 x 269 DataFrame (160 cells, 268 genes + cell_id)
 ```
 
 ---
@@ -166,57 +164,27 @@ sd2 <- readSpatialData("subset.zarr")
 validateSpatialData("subset.zarr")$valid  # TRUE
 ```
 
-```python
-# Cross-language verification
-import spatialdata
-sd = spatialdata.read_zarr("subset.zarr")  # reads successfully
-```
-
 ---
 
-## 6. Multimodal Image + Transcript Integration
-
-> SpatialData stores combine molecular coordinates with tissue images
-> and segmentation masks. `readZarrArray()` loads raster data;
-> `cropImage()` extracts regions of interest.
-
-<div align="center">
-<img src="man/figures/fig6_multimodal.png"
-    width="700" alt="Multimodal visualization"/>
-</div>
-
-> **Fig. 6.** (**a**) Transcript spots overlaid on morphology image.
-> (**b**) Cell segmentation mask. (**c**) `cropImage()` subregion.
-> (**d**) MERFISH transcript density (3.7M molecules) + cell centroids.
-
-```r
-img <- readZarrArray(file.path(store, "images", "morphology", "scale0"))
-mask <- readZarrArray(file.path(store, "labels", "cell_labels", "scale0"))
-crop <- cropImage(img_path, xmin=5, xmax=15, ymin=5, ymax=15)
-```
-
----
-
-## 7. Downstream Bioconductor Integration
+## 6. Downstream Bioconductor Integration
 
 > `aggregatePoints()` output integrates directly with the Bioconductor
 > single-cell ecosystem via `SingleCellExperiment`.
 
 <div align="center">
-<img src="man/figures/fig7_downstream.png"
+<img src="man/figures/fig6_downstream.png"
     width="700" alt="Downstream analysis"/>
 </div>
 
-> **Fig. 7.** Downstream analysis of **160 real MERFISH cells**.
-> (**a**) PCA after library-size normalization, coloured by cortical
-> layer. Layers separate along PC1-PC2. (**b**) Top gene composition
-> per layer showing layer-specific expression signatures.
+> **Fig. 6.** Downstream analysis of **real MERFISH cells**.
+> (**a**) PCA after log-normalization of the `aggregatePoints()` count
+> matrix, coloured by cortical layer with 68% confidence ellipses.
+> (**b**) Gene composition per layer (top 8 genes).
 
 ```r
-sce <- SingleCellExperiment(
-    assays = list(counts = t(count_mat)),
-    colData = DataFrame(layer = cell_layers))
-pca <- prcomp(log1p(count_mat))
+counts <- aggregatePoints(pts, shapes,
+    feature_col = "gene", region_col = "cell_id")
+pca <- prcomp(log1p(as.matrix(counts[, -1])))
 ```
 
 ---
@@ -226,9 +194,9 @@ pca <- prcomp(log1p(count_mat))
 | Feature | Implementation |
 |---|---|
 | **Lazy loading** | Images/labels as path references; `readZarrDelayed()` for `DelayedArray` out-of-memory access |
-| **Memory** | 3.7M-transcript MERFISH object: 99 MB; image refs: <2 KB each |
-| **Scalability** | `bboxQuery()` operates on loaded `DataFrame`; scales linearly with element size |
-| **Python interop** | `writeSpatialData()` produces Zarr v2 compliant stores; `validateSpatialData()` checks 14 spec criteria |
+| **Memory** | 3.7M-transcript object: 99 MB; image refs: <2 KB each |
+| **Python interop** | `writeSpatialData()` produces Zarr v2 stores; `validateSpatialData()` checks 14 spec criteria |
+| **Multimodal** | `readZarrArray()` loads images/masks; `cropImage()` extracts ROIs; all elements share coordinate systems |
 
 ---
 
