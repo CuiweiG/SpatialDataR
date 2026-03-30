@@ -112,7 +112,9 @@ roi <- bboxQuery(sd,
 counts <- aggregatePoints(
     spatialPoints(sd)[["transcripts"]],
     shapes(sd)[["cell_circles"]],
-    feature_col = "gene", region_col = "cell_id")
+    feature_col = "feature_name", region_col = "cell_id")
+dim(counts)
+#> [1] 167780    322
 ```
 
 ---
