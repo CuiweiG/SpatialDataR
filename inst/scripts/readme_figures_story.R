@@ -334,11 +334,45 @@ poly_list <- lapply(seq_len(nrow(anat_df)), function(i) {
     data.frame(x=parsed[[1]][,1], y=parsed[[1]][,2], region_id=i)
 })
 poly_df <- do.call(rbind, poly_list)
-centroid_layers <- spatialJoin(
-    DataFrame(x=geometryCentroids(anat_df$geometry)$x,
-              y=geometryCentroids(anat_df$geometry)$y),
-    anat, region_names=layer_names)
-poly_df$layer <- centroid_layers[poly_df$region_id]
+
+## Map polygons to cortical layers using transcript cell_type annotations
+## (centroid-based mapping fails for thin layers like VISp_I)
+cat("  Mapping polygons to layers via transcript annotations...\n")
+poly_idx <- spatialJoin(spatialPoints(sd2)[["single_molecule"]], anat,
+                         region_names = paste0("poly", 1:6))
+pts_with_poly <- data.frame(cell_type = mer_pts$cell_type, polygon = poly_idx)
+pts_with_poly <- pts_with_poly[!is.na(pts_with_poly$polygon), ]
+
+## For each polygon, find the layer it best represents
+## Use exclusive assignment: which layer has the highest FRACTION inside this polygon?
+cortex_types <- c("VISp_I","VISp_II/III","VISp_IV","VISp_V","VISp_VI","VISp_wm")
+poly_layer_map <- character(6)
+assigned_layers <- character(0)
+
+for (pass in 1:6) {
+    best_score <- -1; best_poly <- 0; best_layer <- ""
+    for (pid in 1:6) {
+        if (poly_layer_map[pid] != "") next
+        in_poly <- pts_with_poly[pts_with_poly$polygon == paste0("poly", pid), ]
+        for (layer in setdiff(cortex_types, assigned_layers)) {
+            n_layer_in_poly <- sum(in_poly$cell_type == layer)
+            n_layer_total <- sum(pts_with_poly$cell_type == layer)
+            if (n_layer_total == 0) next
+            frac <- n_layer_in_poly / n_layer_total
+            if (frac > best_score) {
+                best_score <- frac; best_poly <- pid; best_layer <- layer
+            }
+        }
+    }
+    if (best_poly > 0) {
+        poly_layer_map[best_poly] <- best_layer
+        assigned_layers <- c(assigned_layers, best_layer)
+        cat("    poly", best_poly, "->", best_layer,
+            "(", round(best_score*100,1), "% of layer's transcripts)\n")
+    }
+}
+
+poly_df$layer <- poly_layer_map[poly_df$region_id]
 poly_df$layer <- factor(poly_df$layer, levels=layer_names)
 
 layer_cols <- c("VISp_I"="#D62728","VISp_II/III"="#1F77B4","VISp_IV"="#2CA02C",
