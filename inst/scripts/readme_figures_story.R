@@ -430,17 +430,26 @@ cell_expr_df <- data.frame(
 cell_expr_df <- cell_expr_df[!is.na(cell_expr_df$x), ]
 cell_expr_df <- cell_expr_df[order(cell_expr_df$expr), ]  # low first
 
+## Dark tissue background for context
+tissue_bg <- data.frame(
+    x = c(min(mer_pts$x), max(mer_pts$x), max(mer_pts$x), min(mer_pts$x)),
+    y = c(min(mer_pts$y), min(mer_pts$y), max(mer_pts$y), max(mer_pts$y)))
+
 p5b <- ggplot() +
+    ## Cells colored by Rorb — FIRST (bottom layer)
+    geom_point(data=cell_expr_df, aes(x=x, y=y, colour=expr),
+               size=1.5, shape=16) +
+    ## Layer polygons ON TOP — semi-transparent so Rorb shows through
     geom_polygon(data=poly_df[!is.na(poly_df$layer),],
                  aes(x=x,y=y,fill=layer,group=region_id),
-                 colour="white",linewidth=0.5, alpha=0.3) +
-    geom_point(data=cell_expr_df, aes(x=x, y=y, colour=expr),
-               size=0.6, alpha=0.8, shape=16) +
+                 colour="white",linewidth=0.7, alpha=0.35) +
     scale_fill_manual(values=layer_cols, name="Layer", labels=layer_labels,
-                      guide=guide_legend(order=1)) +
+                      guide=guide_legend(order=1,
+                          override.aes=list(alpha=0.7))) +
     scale_colour_viridis_c(option="inferno", name=paste0(marker_gene,"\ncounts"),
                             trans="sqrt",
-                            guide=guide_colorbar(order=2)) +
+                            guide=guide_colorbar(order=2, barwidth=0.8,
+                                                  barheight=3)) +
     coord_equal(expand=FALSE) +
     annotate("segment",x=max(mer_pts$x)-550,xend=max(mer_pts$x)-50,
              y=min(mer_pts$y)+50,yend=min(mer_pts$y)+50,linewidth=1.5,colour="black") +
@@ -451,7 +460,8 @@ p5b <- ggplot() +
                           " cells, 268 genes\n",
                           marker_gene, " (Layer IV marker) expression"),
          x=expression(italic(x)~"("*mu*"m)"),y=expression(italic(y)~"("*mu*"m)")) +
-    th(8.5)
+    th(8.5) +
+    theme(panel.background=element_rect(fill="#F0EDE8", colour=NA))
 
 fig5 <- (p5a+labs(tag="a")) + (p5b+labs(tag="b")) +
     plot_layout(ncol=2,widths=c(1,0.85)) +
