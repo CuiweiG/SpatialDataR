@@ -14,7 +14,7 @@
 
 ## Why SpatialDataR?
 
-SpatialData (Marconato et al. 2024, *Nat Methods*) established a
+SpatialData (Marconato et al. 2025, *Nat Methods*) established a
 universal Zarr-based on-disk format for spatial omics, adopted by the
 scverse ecosystem and supported by 10x Genomics Xenium, Vizgen MERFISH,
 and NanoString CosMx platforms. However, R/Bioconductor users currently
@@ -22,15 +22,15 @@ require Python (via `reticulate`) to access these stores, creating
 friction in analysis workflows that otherwise run entirely in R.
 
 **SpatialDataR** provides a native R interface that goes beyond data
-access â€” it bridges SpatialData stores directly into the Bioconductor
+access â€?it bridges SpatialData stores directly into the Bioconductor
 ecosystem and leverages R's statistical computing strengths for spatial
 analysis that has no equivalent in Python:
 
-- **Zero-friction Bioconductor bridge**: `readSpatialData()` â†’
+- **Zero-friction Bioconductor bridge**: `readSpatialData()` â†?
   `toSingleCellExperiment()` in two lines
 - **Spatial statistics**: Moran's I autocorrelation, spatial
   differential expression, spatstat point pattern integration
-- **Cross-platform**: Xenium, MERFISH, Visium HD â€” same API,
+- **Cross-platform**: Xenium, MERFISH, Visium HD â€?same API,
   no platform-specific code
 
 ## Validation
@@ -53,7 +53,7 @@ SpatialData Zarr v3 stores. Reproducible via `inst/scripts/`.
 
 > **Fig. 1.** (**a**) Transcript density map (34.5M molecules, 30 um
 > bins). (**b**) Cell centroids (167,780 cells) coloured by total
-> transcript count. Both elements obtained via `readSpatialData()` â†’
+> transcript count. Both elements obtained via `readSpatialData()` â†?
 > `toSingleCellExperiment()`, producing a 313 x 167,780
 > SingleCellExperiment ready for scran/scater analysis.
 
@@ -100,7 +100,7 @@ roi <- bboxQuery(spatialPoints(sd)[["transcripts"]],
 
 > **Fig. 3.** (**a**) Moran's I spatial autocorrelation across 313
 > genes (3,000 cells, k=15 neighbours). Top spatially variable genes
-> include CEACAM6 (I=0.36), FOXA1, GATA3, FASN, EPCAM â€” all known
+> include CEACAM6 (I=0.36), FOXA1, GATA3, FASN, EPCAM â€?all known
 > breast cancer markers with spatially structured expression.
 > (**b**) Spatial map of CEACAM6 showing clear tumour-nest clustering.
 > \*\*\* p < 0.001 (BH-adjusted).
@@ -156,7 +156,7 @@ de <- spatialDiffExpression(
 > polygons from `shapes/anatomical` overlaid with single-cell Rorb
 > expression (Layer IV marker) from `toSingleCellExperiment()`.
 > Bright cells cluster in Layer IV as expected. Both datasets read
-> with the same `readSpatialData()` â€” no platform-specific code.
+> with the same `readSpatialData()` â€?no platform-specific code.
 
 ```r
 sd_xenium  <- readSpatialData("xenium_breast.zarr")
@@ -178,18 +178,18 @@ layers <- spatialJoin(
 | **I/O** | `readSpatialData()` | Read SpatialData Zarr v2/v3 stores |
 | | `writeSpatialData()` | Write SpatialData Zarr stores |
 | | `readParquetPoints()` | Read Parquet point tables |
-| **Bridge** | `toSingleCellExperiment()` | â†’ SingleCellExperiment |
-| | `toSpatialExperiment()` | â†’ SpatialExperiment with spatial coords |
-| | `toPointPattern()` | â†’ spatstat ppp for point process analysis |
+| **Bridge** | `toSingleCellExperiment()` | â†?SingleCellExperiment |
+| | `toSpatialExperiment()` | â†?SpatialExperiment with spatial coords |
+| | `toPointPattern()` | â†?spatstat ppp for point process analysis |
 | **Spatial** | `bboxQuery()` | Bounding-box spatial query |
 | | `spatialJoin()` | Point-in-polygon region assignment |
-| | `aggregatePoints()` | Transcript â†’ cell Ã— gene matrix |
+| | `aggregatePoints()` | Transcript â†?cell Ã— gene matrix |
 | | `parseGeometry()` | WKB geometry parsing |
 | **Statistics** | `spatialAutocorrelation()` | Moran's I (spatial clustering) |
 | | `spatialDiffExpression()` | DE between spatial regions |
 | **Transforms** | `composeTransforms()` | Chain affine transforms (2D/3D) |
 | | `invertTransform()` | Compute inverse transform |
-| **Validation** | `validateSpatialData()` | Spec compliance (14 criteria) |
+| **Validation** | `validateSpatialData()` | Spec compliance checking |
 | **Multi-sample** | `combineSpatialData()` | Merge multiple stores |
 
 ---
@@ -209,8 +209,8 @@ install.packages(c("arrow", "FNN", "spatstat.geom"))
 
 ## References
 
-1. Marconato L et al. (2024). SpatialData: an open and universal data
-   framework for spatial omics. *Nat Methods* 21:2196--2209.
+1. Marconato L et al. (2025). SpatialData: an open and universal data
+   framework for spatial omics. *Nat Methods* 22:58--62.
    doi:[10.1038/s41592-024-02212-x](https://doi.org/10.1038/s41592-024-02212-x)
 
 2. Janesick A et al. (2023). High resolution mapping of the tumor

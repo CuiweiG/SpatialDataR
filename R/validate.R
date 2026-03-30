@@ -1,6 +1,6 @@
 # R/validate.R
 # Validate SpatialData Zarr store against specification
-# No equivalent exists in R â€” fills a real gap.
+# No equivalent exists in R â€?fills a real gap.
 
 #' @include AllClasses.R
 #' @importFrom jsonlite fromJSON
@@ -9,7 +9,7 @@ NULL
 #' Validate a SpatialData Zarr store
 #'
 #' Checks a \code{.zarr} directory against the SpatialData
-#' on-disk specification (Marconato et al. 2024). Reports
+#' on-disk specification (Marconato et al. 2025). Reports
 #' structural issues, missing metadata, and spec violations.
 #' Useful for diagnosing interoperability problems between
 #' Python and R.
@@ -35,9 +35,9 @@ NULL
 #' }
 #'
 #' @references
-#' Marconato L et al. (2024). SpatialData: an open and
+#' Marconato L et al. (2025). SpatialData: an open and
 #' universal data framework for spatial omics. \emph{Nat
-#' Methods} 21:2196-2209.
+#' Methods} 22:58-62.
 #' \doi{10.1038/s41592-024-02212-x}
 #'
 #' @export

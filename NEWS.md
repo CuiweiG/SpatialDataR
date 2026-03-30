@@ -4,7 +4,7 @@
 
 * `SpatialData` S4 class with validity checking for
   multi-modal spatial omics data, following the SpatialData
-  specification (Marconato et al. 2024 *Nat Methods*).
+  specification (Marconato et al. 2025 *Nat Methods*).
 
 ### Store I/O
 * `readSpatialData()` reads SpatialData Zarr stores

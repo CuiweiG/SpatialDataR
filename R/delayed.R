@@ -9,16 +9,17 @@ NULL
 #' Load a Zarr array as DelayedArray
 #'
 #' Reads a Zarr array directory as a \code{DelayedArray}
-#' for out-of-memory access. Falls back to in-memory
-#' reading if \pkg{DelayedArray} or a Zarr backend is
-#' not available.
-#'
-#' This is the recommended way to access large image and
-#' label arrays, as it avoids loading entire raster data
-#' into R memory.
+#' for out-of-memory access. For Zarr v2 stores, uses
+#' \pkg{Rarr}'s \code{ZarrArray} seed for true lazy
+#' chunk-level access. For Zarr v3 stores (or when Rarr
+#' is not available), wraps the in-memory result in a
+#' \code{DelayedArray} to provide a consistent interface.
+#' Falls back to a regular array when neither
+#' \code{DelayedArray} nor a Zarr backend is available.
 #'
 #' @param zarr_path Path to a Zarr array directory
-#'   (containing \code{.zarray} metadata).
+#'   (containing \code{.zarray} or \code{zarr.json}
+#'   metadata).
 #' @return A \code{DelayedArray} if backends available,
 #'   otherwise a regular array via \code{readZarrArray}.
 #'
@@ -35,25 +36,40 @@ readZarrDelayed <- function(zarr_path) {
     zarr_path <- normalizePath(zarr_path,
         mustWork = TRUE)
 
-    ## Try Rarr's DelayedArray backend
-    if (requireNamespace("Rarr", quietly = TRUE) &&
-        requireNamespace("DelayedArray",
-            quietly = TRUE)) {
-        tryCatch({
+    has_rarr <- requireNamespace("Rarr", quietly = TRUE)
+    has_da <- requireNamespace("DelayedArray",
+        quietly = TRUE)
+    is_v2 <- file.exists(
+        file.path(zarr_path, ".zarray"))
+
+    ## Zarr v2 + Rarr: true lazy access via ZarrArray seed
+    if (is_v2 && has_rarr && has_da) {
+        return(tryCatch({
             seed <- Rarr::ZarrArray(zarr_path)
             DelayedArray::DelayedArray(seed)
         }, error = function(e) {
             message(
-                "DelayedArray failed, ",
+                "Rarr DelayedArray failed, ",
                 "falling back to in-memory: ",
                 conditionMessage(e))
             readZarrArray(zarr_path)
-        })
+        }))
+    }
+
+    ## Zarr v3 or no Rarr: read into memory, wrap in
+    ## DelayedArray for consistent interface
+    arr <- readZarrArray(zarr_path)
+
+    if (has_da) {
+        tryCatch(
+            DelayedArray::DelayedArray(arr),
+            error = function(e) arr
+        )
     } else {
         message(
-            "Install Rarr + DelayedArray for ",
-            "lazy access. Loading into memory.")
-        readZarrArray(zarr_path)
+            "Install DelayedArray for lazy access. ",
+            "Returning in-memory array.")
+        arr
     }
 }
 

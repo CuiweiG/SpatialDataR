@@ -7,7 +7,7 @@
 NULL
 
 ## Suppress R CMD check NOTEs for ggplot2 NSE
-utils::globalVariables(c("x", "y", "group"))
+utils::globalVariables(c("x", "y", "group", ".data"))
 
 #' Plot SpatialData elements with optional image overlay
 #'
@@ -209,11 +209,10 @@ plotSpatialData <- function(sdata,
     }
 
     if (!is.null(color_by) && color_by %in% names(df)) {
-        ## Use aes_string for programmatic column name
-        mapping <- ggplot2::aes_string(
-            x = "x", y = "y", color = color_by)
         p + ggplot2::geom_point(
-            data = df, mapping = mapping,
+            data = df,
+            ggplot2::aes(x = x, y = y,
+                color = .data[[color_by]]),
             size = point_size,
             alpha = point_alpha)
     } else {

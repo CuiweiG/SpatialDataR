@@ -1,11 +1,11 @@
 # R/AllGenerics.R
-# Generic function definitions â€” extension points for ecosystem
+# Generic function definitions â€?extension points for ecosystem
 
 #' @include AllClasses.R
 #' @importFrom methods setGeneric
 NULL
 
-# readSpatialData is a plain function (not generic) â€” see read-zarr.R
+# readSpatialData is a plain function (not generic) â€?see read-zarr.R
 
 #' Access images from a SpatialData object
 #'
@@ -89,3 +89,46 @@ setGeneric("coordinateSystems", function(x)
 #' transformCoords(pts, ct)
 setGeneric("transformCoords", function(x, transform, ...)
     standardGeneric("transformCoords"))
+
+#' Bounding box spatial query
+#'
+#' Subsets a \code{SpatialData} object or individual elements
+#' to a rectangular region of interest. For point/shape
+#' \code{DataFrame} elements, rows outside the bounding box are
+#' removed. For image/label path references, the bounding box is
+#' stored as metadata (load and crop manually with
+#' \code{readZarrArray}).
+#'
+#' This mirrors the \code{bounding_box_query()} function from
+#' the Python \code{spatialdata} library.
+#'
+#' @param x A \code{\linkS4class{SpatialData}} object, a
+#'   \code{DataFrame} with \code{x} and \code{y} columns, or a
+#'   \code{SimpleList} of such elements.
+#' @param xmin Numeric. Minimum x coordinate.
+#' @param xmax Numeric. Maximum x coordinate.
+#' @param ymin Numeric. Minimum y coordinate.
+#' @param ymax Numeric. Maximum y coordinate.
+#'
+#' @return Same class as input, subsetted to the bounding box.
+#'
+#' @references
+#' Marconato L et al. (2025). SpatialData: an open and universal
+#' data framework for spatial omics. \emph{Nat Methods} 22:58-62.
+#' \doi{10.1038/s41592-024-02212-x}
+#'
+#' @export
+#' @rdname bboxQuery
+#' @examples
+#' library(S4Vectors)
+#' pts <- DataFrame(
+#'     x = c(1, 2, 3, 4, 5),
+#'     y = c(5, 4, 3, 2, 1),
+#'     gene = c("A", "B", "C", "D", "E")
+#' )
+#' # Query points in [2,4] x [2,4]
+#' sub <- bboxQuery(pts, xmin = 2, xmax = 4, ymin = 2, ymax = 4)
+#' sub
+setGeneric("bboxQuery",
+    function(x, xmin, xmax, ymin, ymax)
+    standardGeneric("bboxQuery"))

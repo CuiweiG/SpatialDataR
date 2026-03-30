@@ -1,5 +1,5 @@
 # R/coerce-bioc.R
-# Bioconductor bridge: SpatialData â†’ SingleCellExperiment / SpatialExperiment
+# Bioconductor bridge: SpatialData â†?SingleCellExperiment / SpatialExperiment
 
 #' @include AllClasses.R
 #' @include AllGenerics.R
@@ -38,9 +38,9 @@ NULL
 #'   \code{rowData} from var.
 #'
 #' @references
-#' Marconato L et al. (2024). SpatialData: an open and
+#' Marconato L et al. (2025). SpatialData: an open and
 #' universal data framework for spatial omics. \emph{Nat
-#' Methods} 21:2196-2209.
+#' Methods} 22:58-62.
 #' \doi{10.1038/s41592-024-02212-x}
 #'
 #' @export
@@ -187,9 +187,9 @@ toSingleCellExperiment <- function(
 #' @return A \code{SpatialExperiment} object.
 #'
 #' @references
-#' Marconato L et al. (2024). SpatialData: an open and
+#' Marconato L et al. (2025). SpatialData: an open and
 #' universal data framework for spatial omics. \emph{Nat
-#' Methods} 21:2196-2209.
+#' Methods} 22:58-62.
 #' \doi{10.1038/s41592-024-02212-x}
 #'
 #' @export

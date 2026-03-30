@@ -25,22 +25,27 @@ NULL
 #' @return Invisible \code{path}.
 #'
 #' @details
-#' The writer creates a spec-compliant SpatialData Zarr store:
+#' The writer creates a SpatialData Zarr store with CSV-based
+#' tabular elements:
 #' \itemize{
 #'   \item Top-level \code{.zattrs} with \code{spatialdata_attrs}
 #'     and coordinate system definitions
-#'   \item Points/shapes written as CSV (compatible with
-#'     SpatialData readers)
+#'   \item Points/shapes written as CSV (readable by both
+#'     R and Python SpatialData)
 #'   \item Tables written as AnnData-format obs/var CSV
-#'   \item Image/label path references are copied if accessible
+#'   \item Image/label directories are copied if accessible
 #'   \item Element-level \code{.zattrs} with coordinate
 #'     transformations preserved
 #' }
+#' Note: tabular data is written as CSV rather than Parquet
+#' or native Zarr arrays. This is sufficient for roundtrip
+#' interoperability but does not preserve sparse matrix
+#' encoding or Parquet-specific metadata.
 #'
 #' @references
-#' Marconato L et al. (2024). SpatialData: an open and
+#' Marconato L et al. (2025). SpatialData: an open and
 #' universal data framework for spatial omics. \emph{Nat
-#' Methods} 21:2196-2209.
+#' Methods} 22:58-62.
 #' \doi{10.1038/s41592-024-02212-x}
 #'
 #' @export
@@ -201,11 +206,11 @@ writeSpatialData <- function(sd, path,
         src <- elem$path
         dst <- file.path(base_path, type_dir, nm)
         if (dir.exists(src)) {
-            dir.create(dst, recursive = TRUE)
-            file.copy(
-                list.files(src, full.names = TRUE,
-                    recursive = TRUE),
-                dst, recursive = TRUE)
+            ## Copy entire directory tree preserving structure
+            dst_parent <- file.path(base_path, type_dir)
+            dir.create(dst_parent, recursive = TRUE,
+                showWarnings = FALSE)
+            file.copy(src, dst_parent, recursive = TRUE)
         }
         ## Write .zattrs
         meta <- elem$metadata

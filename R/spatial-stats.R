@@ -140,16 +140,7 @@ spatialAutocorrelation <- function(
 
         observed[g] <- (n / S0) * (numerator / ss)
 
-        ## Variance under normality assumption
-        ## Using the simplified formula for binary weights
-        S1 <- 2.0 * S0  # sum_ij (w_ij + w_ji)^2 for binary
-        S2 <- sum((k + colSums(
-            matrix(seq_len(n)[nn_idx], nrow = n) > 0
-        ))^2)  # This is approximate
-        ## Use simpler variance formula
-        ## Var(I) ≈ (n^2 * S1 - n * S2 + 3 * S0^2) /
-        ##          ((n^2 - 1) * S0^2) - EI^2
-        ## But for k-NN with large n, use the asymptotic:
+        ## Standard deviation under randomization assumption
         sds[g] <- .moranVariance(n, k, S0)
     }
 

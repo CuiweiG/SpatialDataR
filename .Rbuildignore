@@ -5,12 +5,5 @@
 ^SpatialDataR\.Rcheck$
 ^SpatialDataR\.BiocCheck$
 ^SpatialDataR_.*\.tar\.gz$
-^inst/scripts/create_python_native_store\.py$
-^inst/scripts/create_real_store\.R$
-^inst/scripts/fix_test_data\.R$
-^inst/scripts/full_validation_pipeline\.R$
-^inst/scripts/generate_readme_figures\.R$
-^inst/scripts/generate_real_figures\.R$
-^inst/scripts/generate_roundtrip_figure\.R$
-^inst/scripts/validate_and_plot\.R$
-^inst/scripts/validate_real_data\.R$
+^figures$
+^inst/scripts$

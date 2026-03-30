@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 ## Create a SpatialData-spec-compliant Zarr store for validation
-## Structure follows Marconato et al. 2024 Nat Methods exactly
+## Structure follows Marconato et al. 2025 Nat Methods exactly
 ##
 ## This creates a small but structurally complete .zarr store
 ## mimicking a 10x Xenium breast cancer dataset.
@@ -37,7 +37,7 @@ zattrs <- '{
 writeLines(zattrs, file.path(outdir, ".zattrs"))
 
 ## ============================================================
-## images/morphology â€” small 3-channel image (20x20x3)
+## images/morphology â€?small 3-channel image (20x20x3)
 ## ============================================================
 img_dir <- file.path(outdir, "images", "morphology", "scale0")
 dir.create(img_dir, recursive = TRUE)
@@ -79,7 +79,7 @@ writeBin(img_data, file.path(img_dir, "0.0.0"))
 cat("  images/morphology: 20x20x3 RGB\n")
 
 ## ============================================================
-## labels/cell_labels â€” segmentation mask (20x20)
+## labels/cell_labels â€?segmentation mask (20x20)
 ## ============================================================
 lbl_dir <- file.path(outdir, "labels", "cell_labels", "scale0")
 dir.create(lbl_dir, recursive = TRUE)
@@ -115,7 +115,7 @@ writeBin(as.raw(as.vector(t(labels))), file.path(lbl_dir, "0.0"))
 cat("  labels/cell_labels: 20x20 mask (50 cells)\n")
 
 ## ============================================================
-## points/transcripts â€” transcript coordinates
+## points/transcripts â€?transcript coordinates
 ## ============================================================
 pts_dir <- file.path(outdir, "points", "transcripts")
 dir.create(pts_dir, recursive = TRUE)
@@ -149,7 +149,7 @@ write.csv(tx_df, file.path(pts_dir, "transcripts.csv"),
 cat("  points/transcripts:", n_tx, "transcripts, 10 genes\n")
 
 ## ============================================================
-## shapes/cell_boundaries â€” cell polygons
+## shapes/cell_boundaries â€?cell polygons
 ## ============================================================
 shp_dir <- file.path(outdir, "shapes", "cell_boundaries")
 dir.create(shp_dir, recursive = TRUE)
@@ -174,7 +174,7 @@ write.csv(circles, file.path(shp_dir, "circles.csv"),
 cat("  shapes/cell_boundaries: 50 cell circles\n")
 
 ## ============================================================
-## tables/table â€” gene expression (AnnData-like structure)
+## tables/table â€?gene expression (AnnData-like structure)
 ## ============================================================
 tbl_dir <- file.path(outdir, "tables", "table")
 dir.create(tbl_dir, recursive = TRUE)

@@ -1,0 +1,41 @@
+bibentry(
+    bibtype = "Manual",
+    title = "SpatialDataR: Native R Interface to the SpatialData Zarr Format for Spatial Omics",
+    author = person("Cuiwei", "Gao"),
+    year = "2025",
+    note = "R package version 0.99.0",
+    url = "https://github.com/CuiweiG/SpatialDataR"
+)
+
+bibentry(
+    bibtype = "Article",
+    title = "SpatialData: an open and universal data framework for spatial omics",
+    author = c(
+        person("Luca", "Marconato"),
+        person("Kevin A.", "Yamauchi"),
+        person("Isaac", "Virshup"),
+        person("Elyas", "Heidari"),
+        person("Tim", "Treis"),
+        person("Wouter-Michiel", "Vierdag"),
+        person("Marcella", "Toth"),
+        person("Sonja", "Stockhaus"),
+        person("Rahul B.", "Shrestha"),
+        person("Benjamin", "Rombaut"),
+        person("Lotte", "Pollaris"),
+        person("Laurens", "Lehner"),
+        person("Harald", "Voehringer"),
+        person("Ilia", "Kats"),
+        person("Yvan", "Saeys"),
+        person("Sinem K.", "Saka"),
+        person("Wolfgang", "Huber"),
+        person("Moritz", "Gerstung"),
+        person("Josh", "Moore"),
+        person("Fabian J.", "Theis"),
+        person("Oliver", "Stegle")
+    ),
+    journal = "Nature Methods",
+    year = "2025",
+    volume = "22",
+    pages = "58--62",
+    doi = "10.1038/s41592-024-02212-x"
+)

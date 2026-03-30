@@ -8,7 +8,7 @@
 #' with \code{SpatialExperiment}.
 #'
 #' @section Why SpatialDataR:
-#' The Python \code{spatialdata} library (Marconato et al. 2024)
+#' The Python \code{spatialdata} library (Marconato et al. 2025)
 #' established a universal data framework for spatial omics based
 #' on OME-NGFF (Moore et al. 2023). R/Bioconductor users currently
 #' need Python bridges (reticulate) to access SpatialData stores.
@@ -48,8 +48,8 @@
 #' }
 #'
 #' @references
-#' Marconato L et al. (2024). SpatialData: an open and universal
-#' data framework for spatial omics. \emph{Nat Methods} 21:2196-2209.
+#' Marconato L et al. (2025). SpatialData: an open and universal
+#' data framework for spatial omics. \emph{Nat Methods} 22:58-62.
 #' \doi{10.1038/s41592-024-02212-x}
 #'
 #' Moore J et al. (2023). OME-Zarr: a cloud-optimized bioimaging
