@@ -72,6 +72,27 @@ NULL
 #' @param dtype Character. Zarr v3 data type string.
 #' @return A list with \code{what}, \code{size}, \code{signed}.
 #' @keywords internal
+## Convert raw int64 bytes to R numeric
+## R has no native int64; we read as pairs of uint32 and combine
+## Accurate for values up to 2^53 (9e15), which covers all counts
+.readInt64Raw <- function(raw_data, n, endian = "little") {
+    ## Read as signed int32 pairs (R doesn't support unsigned int32)
+    all_ints <- readBin(raw_data, what = "integer", n = 2L * n,
+                        size = 4L, signed = TRUE, endian = endian)
+    lo_vals <- all_ints[seq(1L, 2L * n, by = 2L)]
+    hi_vals <- all_ints[seq(2L, 2L * n, by = 2L)]
+    ## Convert signed int32 to unsigned via: if < 0, add 2^32
+    lo_unsigned <- ifelse(lo_vals < 0L,
+                          as.numeric(lo_vals) + 4294967296,
+                          as.numeric(lo_vals))
+    hi_unsigned <- ifelse(hi_vals < 0L,
+                          as.numeric(hi_vals) + 4294967296,
+                          as.numeric(hi_vals))
+    ## Combine: value = hi * 2^32 + lo
+    result <- hi_unsigned * 4294967296 + lo_unsigned
+    result
+}
+
 .zarrV3TypeInfo <- function(dtype) {
     switch(dtype,
         int8    = list(what = "integer", size = 1L,
@@ -80,8 +101,8 @@ NULL
             signed = TRUE),
         int32   = list(what = "integer", size = 4L,
             signed = TRUE),
-        int64   = list(what = "double",  size = 8L,
-            signed = TRUE),
+        int64   = list(what = "integer", size = 8L,
+            signed = TRUE, is_int64 = TRUE),
         uint8   = list(what = "integer", size = 1L,
             signed = FALSE),
         uint16  = list(what = "integer", size = 2L,
@@ -218,8 +239,11 @@ readZarrV3Array <- function(zarr_path) {
     element_bytes <- type_info$size
 
     ## Allocate output
+    ## int64 values are stored as R numeric (double)
+    result_what <- if (isTRUE(type_info$is_int64)) "numeric"
+                   else type_info$what
     if (ndim == 1L) {
-        result <- vector(type_info$what,
+        result <- vector(result_what,
             total_elements)
         if (!is.null(fill_value) &&
             !identical(fill_value, 0) &&
@@ -246,13 +270,18 @@ readZarrV3Array <- function(zarr_path) {
                 raw_data <- .zstdDecompress(raw_data,
                     max_size = expected + 1024L)
             }
-            vals <- readBin(raw_data,
-                what = type_info$what,
-                n = n_elements,
-                size = type_info$size,
-                signed = type_info$signed,
-                endian = endian
-            )
+            if (isTRUE(type_info$is_int64)) {
+                vals <- .readInt64Raw(raw_data, n_elements,
+                    endian = endian)
+            } else {
+                vals <- readBin(raw_data,
+                    what = type_info$what,
+                    n = n_elements,
+                    size = type_info$size,
+                    signed = type_info$signed,
+                    endian = endian
+                )
+            }
             result[start:(start + length(vals) - 1L)] <-
                 vals
         }
@@ -261,7 +290,7 @@ readZarrV3Array <- function(zarr_path) {
     } else {
         ## Multi-dimensional array
         result <- array(
-            if (type_info$what == "integer") 0L else 0.0,
+            if (result_what == "integer") 0L else 0.0,
             dim = shape
         )
 
@@ -292,13 +321,18 @@ readZarrV3Array <- function(zarr_path) {
                 raw_data <- .zstdDecompress(raw_data,
                     max_size = expected + 1024L)
             }
-            vals <- readBin(raw_data,
-                what = type_info$what,
-                n = n_elements,
-                size = type_info$size,
-                signed = type_info$signed,
-                endian = endian
-            )
+            if (isTRUE(type_info$is_int64)) {
+                vals <- .readInt64Raw(raw_data, n_elements,
+                    endian = endian)
+            } else {
+                vals <- readBin(raw_data,
+                    what = type_info$what,
+                    n = n_elements,
+                    size = type_info$size,
+                    signed = type_info$signed,
+                    endian = endian
+                )
+            }
 
             ## Place values into result array
             ## Zarr uses C-order (row-major)
