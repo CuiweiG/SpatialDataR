@@ -411,29 +411,45 @@ p5a <- ggplot(density, aes(x=xb,y=yb,fill=count)) + geom_raster() +
     th(8.5)
 
 ## Panel b: MERFISH polygons + cells
-## Transcript density raster inside polygons for texture
-## Bin transcripts that have a layer assignment
-mer_pts_in <- mer_pts[!is.na(mer_pts$layer), ]
-mer_bin <- 8
-mer_pts_in$xb <- round(mer_pts_in$x / mer_bin) * mer_bin
-mer_pts_in$yb <- round(mer_pts_in$y / mer_bin) * mer_bin
-mer_dens <- aggregate(layer ~ xb + yb, data=mer_pts_in, FUN=length)
-colnames(mer_dens)[3] <- "n"
+## Panel b: anatomical polygons + cells colored by Rorb (Layer IV marker)
+cat("  Building MERFISH SCE for cell-level expression...\n")
+sce2 <- toSingleCellExperiment(sd2)
+mer_expr <- t(as.matrix(SummarizedExperiment::assay(sce2, "counts")))
+mer_cell_ids <- as.integer(SummarizedExperiment::colData(sce2)$cell_id)
+
+## Get cell coordinates from shapes
+mer_cell_x <- mer_coords$x[match(mer_cell_ids, mer_cells$cell_id)]
+mer_cell_y <- mer_coords$y[match(mer_cell_ids, mer_cells$cell_id)]
+
+## Choose a strong layer marker — Rorb marks Layer IV
+marker_gene <- "Rorb"
+cell_expr_df <- data.frame(
+    x = mer_cell_x, y = mer_cell_y,
+    expr = mer_expr[, marker_gene]
+)
+cell_expr_df <- cell_expr_df[!is.na(cell_expr_df$x), ]
+cell_expr_df <- cell_expr_df[order(cell_expr_df$expr), ]  # low first
 
 p5b <- ggplot() +
     geom_polygon(data=poly_df[!is.na(poly_df$layer),],
                  aes(x=x,y=y,fill=layer,group=region_id),
-                 colour="white",linewidth=0.5, alpha=0.85) +
-    scale_fill_manual(values=layer_cols, name="Layer", labels=layer_labels) +
+                 colour="white",linewidth=0.5, alpha=0.3) +
+    geom_point(data=cell_expr_df, aes(x=x, y=y, colour=expr),
+               size=0.6, alpha=0.8, shape=16) +
+    scale_fill_manual(values=layer_cols, name="Layer", labels=layer_labels,
+                      guide=guide_legend(order=1)) +
+    scale_colour_viridis_c(option="inferno", name=paste0(marker_gene,"\ncounts"),
+                            trans="sqrt",
+                            guide=guide_colorbar(order=2)) +
     coord_equal(expand=FALSE) +
     annotate("segment",x=max(mer_pts$x)-550,xend=max(mer_pts$x)-50,
              y=min(mer_pts$y)+50,yend=min(mer_pts$y)+50,linewidth=1.5,colour="black") +
     annotate("text",x=max(mer_pts$x)-300,y=min(mer_pts$y)+50,
              label="500 \u00b5m",vjust=-0.7,size=2.5,fontface="bold") +
     labs(title="MERFISH",
-         subtitle=paste0("Mouse primary visual cortex\n",
-                          format(nrow(mer_pts),big.mark=",")," transcripts, ",
-                          format(nrow(mer_cells),big.mark=",")," cells"),
+         subtitle=paste0("Mouse VISp, ", format(nrow(mer_cells), big.mark=","),
+                          " cells, 268 genes\n",
+                          marker_gene, " (Layer IV marker) expression"),
          x=expression(italic(x)~"("*mu*"m)"),y=expression(italic(y)~"("*mu*"m)")) +
     th(8.5)
 
